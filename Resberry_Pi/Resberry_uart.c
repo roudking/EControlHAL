@@ -2,7 +2,6 @@
 
 static void Resberry_uartcallback(void);
 
-
 uint8_t resberry_uctemp;
 #define BUFFER_SIZE 255
 unsigned char resberry_cmd_buffer[BUFFER_SIZE]; //命令缓冲区
@@ -16,12 +15,6 @@ void Resberry_uartinit(void)
    usart_callbackregister(&Resberry_UART, Resberry_uartcallback);
    usart_rx_it_start(&Resberry_UART,&resberry_uctemp);
 }
-
-void Resberry_uartsend(unsigned char *p_data,unsigned int uiSize)
-{
-   usart_transmit(&Resberry_UART, p_data, uiSize);
-}
-
 
 static void Resberry_uartcallback(void)
 {
@@ -42,51 +35,39 @@ static void Resberry_uartcallback(void)
 						cJSON *json_command = cJSON_GetObjectItem(json, "cmd");
 		
 			   if (json_command && json_command->type == cJSON_String) 
-				 {
+	  			{
             strcpy(resberry_cmd, json_command->valuestring); // 更新全局变量cmd
-  					 if(strcmp(resberry_cmd,"color") == 0)
-						  {
-								 cJSON *result = cJSON_GetObjectItem(json, "result");
+  				if(strcmp(resberry_cmd,"ping") == 0)
+				 {
+					// 发送响应
+					Resberry_printf("{\"cmd\":\"ping\",\"result\":\"pong\"}\n");
+				}
+				else if(strcmp(resberry_cmd,"spin") == 0)
+				{
+					cJSON *speed_json = cJSON_GetObjectItem(json, "speed");
 							
-										// 从 result 中提取 x、y、area
-								cJSON *x_item    = cJSON_GetObjectItem(result, "x");
-								cJSON *y_item    = cJSON_GetObjectItem(result, "y");
-								cJSON *area_item = cJSON_GetObjectItem(result, "area");			
-										
-									int x =  x_item -> valueint;
-									int y =  y_item -> valueint;					   
-									int area =  area_item -> valueint;					   
-								Resberry_greenareadataIN(area);
-								Resberry_stateIN(resberry_complite_echo);
-								
-						  }
-							
-							else if(strcmp(resberry_cmd,"number") == 0)
-						  {
-								 cJSON *result = cJSON_GetObjectItem(json, "result");
-							
-										// 从 result 中提取数字字符串
-									int result_num;
-									if(strcmp(result->valuestring,"") == 0)
-									{
-										 result_num = 0;
-									}
-									else  result_num = atoi(result->valuestring);
+			        // 从 speed 中提取数字字符串
+			    	int speed = speed_json->valueint;
+					Resberry_speeddataIN(speed);
+					Resberry_printf("{\"cmd\":\"spin\",\"result\":\"ok\"}\n");
+				}
+				else if(strcmp(resberry_cmd,"angle") == 0)
+				{
+				  cJSON *angle_json = cJSON_GetObjectItem(json, "angle");
+				  // 从 angle 中提取数字字符串
+				  float angle = angle_json->valuedouble;
+				  Resberry_angledataIN(angle);
+				  Resberry_printf("{\"cmd\":\"angle\",\"result\":\"ok\"}\n");
+				 }
 
-								Resberry_numerdataIN(result_num);
-								Resberry_stateIN(resberry_complite_echo);
-								
-						  }
-							
-					} 
 				memset(resberry_cmd_buffer,'\0',sizeof(resberry_cmd_buffer));
 				memset(resberry_cmd,'\0',sizeof(resberry_cmd));
   		
-		   }
-	
-	     cJSON_Delete(json);	
-  }
-   usart_rx_it_start(&Resberry_UART,&resberry_uctemp);
+		     }
+        }
+	      cJSON_Delete(json);	
+      }
+	   usart_rx_it_start(&Resberry_UART,&resberry_uctemp);	
 }
 
 

@@ -5,33 +5,33 @@
 
 typedef enum
 {
-   resberry_wait_echo,
+     resberry_wait_echo,
 	 resberry_complite_echo
 }Resberry_STATE;
 
 typedef struct
 {
-  volatile int num;
-	volatile int green_area;
+    volatile int speed;
+	volatile double angle;
 	volatile Resberry_STATE state;
 }RESBERRY_TEMP;
 
 typedef struct
 {
-  volatile int num[2];
-	volatile int green_area;
-	volatile Resberry_STATE state;	
+    volatile int speed;
+	volatile double angle;
+	volatile Resberry_STATE state;
 }RESBERRY;
 
 void Resberry_init(void);
-void Resberry_greenareadataIN(int indata);
-void Resberry_numerdataIN(int num);
+
+void Resberry_speeddataIN(int indata);
+void Resberry_getspeed(RESBERRY *resberry);
+void Resberry_angledataIN(double angle);
+void Resberry_getangle(RESBERRY *resberry);
 void Resberry_stateIN(Resberry_STATE state);
-void Resberry_getgreen_area(RESBERRY *resberry);
-//void Resberry_getnumer(RESBERRY *resberry);
-void Resberry_sendgetnumercmd(RESBERRY *resberry);
 void Resberry_getstate(RESBERRY *resberry);
-void Resberry_getnumber(RESBERRY *resberry);
+
 
 
 #endif
