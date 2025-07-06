@@ -1,17 +1,19 @@
 #include "Servo.h"
 
-void Servo_init(void)
+void Servo_create(SERVO *servo, SERVO_CONFIG config)
 {
-  Servo_pwminit();
+   servo->servo_config = config;
 }
 
-void Servo_settargetangle(SERVO *servo,float angle)
+void Servo_init(SERVO *servo)
 {
-   servo->angle = angle;
+  Servo_pwminit(servo->servo_config);
+  servo->target_angle = 0.0f; // Initialize angle to 0
 }
 
-void Servo_gotoangle(SERVO* servo)
+void Servo_setangle(SERVO *servo,float angle)
 {
-  int comparevalue = (int)Servo_Comparevaluecal(servo->angle);
-	Servo_setcompare(comparevalue);
+   servo->target_angle = angle;
+   int pwm = (int)Servo_Comparevaluecal(servo->servo_config,angle);
+   Servo_setcompare(servo->servo_config,pwm);
 }

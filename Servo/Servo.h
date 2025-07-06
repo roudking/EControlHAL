@@ -6,11 +6,13 @@
 
 typedef struct
 {
-   float angle;
+   float target_angle;
+   SERVO_CONFIG servo_config; // Servo configuration 
+   uint16_t limit;
 }SERVO;
 
-void Servo_init(void);
-void Servo_settargetangle(SERVO *servo,float angle);
-void Servo_gotoangle(SERVO* servo);
+void Servo_create(SERVO *servo, SERVO_CONFIG config);
+void Servo_init(SERVO *servo);
+void Servo_setangle(SERVO *servo, float angle);
 
 #endif

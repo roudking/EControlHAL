@@ -1,30 +1,32 @@
 #include "Servo_pwm.h"
 
-void Servo_pwminit(void)
+void Servo_pwminit(SERVO_CONFIG servo_config)
 {
-  pwm_init(&Servo_Timer_Port,Servo_TIM_channel);
+  pwm_init(servo_config.Pwm_TIMERPORT, servo_config.CHANNEL);
 }
 
-void Servo_setcompare(uint16_t pwm)
+float  Servo_Comparevaluecal(SERVO_CONFIG servo_config, float angle)
 {
-  pwm_set(&Servo_Timer_Port,Servo_TIM_channel,pwm);
-}
-
-float  Servo_Comparevaluecal(float angle)
-{
-		float range;
-    if(Servo_kind == servo_270)
+	 float range;
+    if(servo_config.kind == servo_270)
 		{
 		  range = 270.0;
 		}
-		else if(Servo_kind == servo_180)
+		else if(servo_config.kind == servo_180)
 		{
 		  range = 180.0;
 		}
 	
 	float k = 2000.0/range;
-	float high_leveltime = k * (angle - delta_bias) + 500.0;
-	float comparevalue = high_leveltime/Servo_TIM_CounterCycleTime;
-		return comparevalue;
+	float high_leveltime = k * (angle - servo_config.delta_bias) + 500.0;
+	float comparevalue = high_leveltime/servo_config.CounterCycleTime;
+	return comparevalue;
 }
+
+
+void Servo_setcompare(SERVO_CONFIG servo_config, uint16_t pwm)
+{
+  pwm_set(servo_config.Pwm_TIMERPORT, servo_config.CHANNEL, pwm);
+}
+
 
