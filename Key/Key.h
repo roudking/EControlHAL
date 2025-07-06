@@ -6,8 +6,10 @@
 typedef struct
 {
    int pin_value;
-}My_KEY;
- 
-void Key_getvalue(My_KEY *key);
- 
-#endif 
+   KEY_CONFIG config; // Key configuration structure
+}KEY;
+
+void Key_create(KEY *key, KEY_CONFIG config);
+void Key_read(KEY *key);
+
+#endif
