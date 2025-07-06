@@ -24,29 +24,9 @@
 
 #include "OLED.h"
 
-// OLED器件地址
-#define OLED_ADDRESS 0x78
-
-// OLED参数
-#define OLED_PAGE 8            // OLED页数
-#define OLED_ROW 8 * OLED_PAGE // OLED行数
-#define OLED_COLUMN 128        // OLED列数
-
 // 显存
 uint8_t OLED_GRAM[OLED_PAGE][OLED_COLUMN];
 
-// ========================== 底层通信函数 ==========================
-
-/**
- * @brief 向OLED发送数据的函数
- * @param data 要发送的数据
- * @param len 要发送的数据长度
- * @return None
- * @note 此函数是移植本驱动时的重要函数 将本驱动库移植到其他平台时应根据实际情况修改此函数
- */
-void OLED_Send(uint8_t *data, uint8_t len) {
-  HAL_I2C_Master_Transmit(&hi2c1, OLED_ADDRESS, data, len, HAL_MAX_DELAY);
-}
 
 /**
  * @brief 向OLED发送指令
@@ -131,7 +111,7 @@ void OLED_DisPlay_Off() {
 
 void OLED_init(void)
 {
-	HAL_Delay(200);
+	delay_ms(200);
 	OLED_Init();
 	OLED_DisPlay_On();
 }
