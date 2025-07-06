@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "pwm.h": "c",
+        "beep_config.h": "c",
         "laser_config.h": "c",
         "iic.h": "c"
     }
