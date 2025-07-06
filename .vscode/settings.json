@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "pwm.h": "c"
+        "pwm.h": "c",
+        "laser_config.h": "c"
     }
 }
