@@ -2,24 +2,24 @@
 
 void delay_us(uint32_t i)
 {
-	uint16_t differ = 0xffff- i - 5;//65535-5-i£¬¼ÆÊý³õÖµ£¬ÓÉÕâ¸öÊý¼ÆÊýµ½65535¸ÕºÃ¼ÆÊýus´Î£¬
-									//Ò²¾ÍÊµÏÖÁËn usÑÓÊ±
+	uint16_t differ = 0xffff- i - 5;//65535-5-iï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½65535ï¿½ÕºÃ¼ï¿½ï¿½ï¿½usï¿½Î£ï¿½
+									//Ò²ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½n usï¿½ï¿½Ê±
 
-	__HAL_TIM_SET_COUNTER(&DELAY_TIMER, differ);	//ÉèÖÃ¼ÆÊýÖµ
+	__HAL_TIM_SET_COUNTER(&DELAY_TIMER, differ);	//ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½Öµ
 
-	HAL_TIM_Base_Start(&DELAY_TIMER);	//¿ªÆô¶¨Ê±Æ÷
+	HAL_TIM_Base_Start(&DELAY_TIMER);	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
 
 	while(differ < 0xffff-6)
 	{
-		differ = __HAL_TIM_GET_COUNTER(&DELAY_TIMER); //»ñÈ¡µ±Ç°¼ÆÊýÖµ
+		differ = __HAL_TIM_GET_COUNTER(&DELAY_TIMER); //ï¿½ï¿½È¡ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Öµ
 	}
 
-	HAL_TIM_Base_Stop(&DELAY_TIMER);//Í£Ö¹¶¨Ê±Æ÷
+	HAL_TIM_Base_Stop(&DELAY_TIMER);//Í£Ö¹ï¿½ï¿½Ê±ï¿½ï¿½
 }
 
 void delay_ms(uint32_t nms)
 {
     for (uint32_t i = 0; i < nms; i++) {
-        delay_us(1000);  // ÑÓÊ± 1 ms
+        delay_us(1000);  // ï¿½ï¿½Ê± 1 ms
     }
 }

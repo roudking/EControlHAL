@@ -3,7 +3,7 @@
 
 #include "tim.h"
 
-#define DELAY_TIMER htim7
+#define DELAY_TIMER htim6
 
 void delay_us(uint32_t i);
 void delay_ms(uint32_t i);
