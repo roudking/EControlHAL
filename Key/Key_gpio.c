@@ -1,6 +1,6 @@
 #include "Key_gpio.h"
 
-int Key_read(void)
+int Key_getvalue(KEY_CONFIG config)
 {
-  return gpio_readpin(Key_GPIO_PORT,Key_GPIO_Pin);
+  return gpio_readpin(config.KEYGPIO_PORT, config.KEYGPIO_PIN);
 }
