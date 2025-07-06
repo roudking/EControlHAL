@@ -1,13 +1,10 @@
 #ifndef _LASER_GPIO_H
 #define _LASER_GPIO_H
 
-#include "my_gpio.h"
+#include "Laser_config.h"
 
-#define LASER_GPIO_Port GPIOE
-#define LASER_GPIO_Pin GPIO_PIN_4
-
-void _Laser_on(void);
-void _Laser_off(void);
+void _Laser_on(LASER_CONFIG config);
+void _Laser_off(LASER_CONFIG config);
 
 
 #endif

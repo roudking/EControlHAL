@@ -5,7 +5,7 @@
 
 typedef struct
 {
-
+    LASER_CONFIG config;  // Configuration for the laser
 }LASER;
 
 void Laser_on(LASER *laser);
