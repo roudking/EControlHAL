@@ -1,10 +1,10 @@
-
 #ifndef _MPU6050_H
 #define _MPU6050_H
 
 #include "mpu6050_iic.h"
-#include "math.h"
+#include "serial.h"
 #include "my_delay.h"
+#include "arm_math.h"
 
 typedef struct
 {
@@ -14,34 +14,36 @@ typedef struct
 
 typedef struct
 {
-    float ax, ay, az;     // µ¥Î»£ºg
-    float gx, gy, gz;     // µ¥Î»£º¡ã/s
+    float ax, ay, az;     // ï¿½ï¿½Î»ï¿½ï¿½g
+    float gx, gy, gz;     // ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½/s
 }MPU_DATA;
 
 typedef struct {
-    double Q_angle;
-    double Q_bias;
-    double R_measure;
-    double angle;
-    double bias;
-    double P[2][2];
+    float Q_angle;
+    float Q_bias;
+    float R_measure;
+    float angle;
+    float bias;
+    float P[2][2];
 } KALMAN;
 
 typedef struct
 {
 		 MPU_CONFIG config;
+		 KALMAN kalmanx;
+	   KALMAN kalmany;
+	
      MPU_DATA mpu_data;
 	   MPU_RAW  mpu_raw;
-	   double KalmanAngleX;
-     double KalmanAngleY;
-	   KALMAN KalmanX;
-	   KALMAN KalmanY;
+	   float pitch;
+     float roll;
 }MPU;
 
-void Mpu_test_who_am_i(MPU *mpu);
+int Mpu_test_who_am_i(MPU *mpu);
 
-void Creat_mpu(MPU *mpu,MPU_CONFIG config_struct,KALMAN kalmanx,KALMAN kalmany);
+void Mpu_creat(MPU *mpu,MPU_CONFIG config_struct,KALMAN Kalmanx,KALMAN Kalmany);
 void Mpu_init(MPU *mpu);
+uint8_t Mpu_clearinterrupt(MPU *mpu);
 void Mpu_getdata(MPU *mpu);
 void Mpu_getKalmandata(MPU *mpu);
 

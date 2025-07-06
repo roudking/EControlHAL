@@ -15,28 +15,32 @@ typedef struct
 	 uint8_t gyro_config;
 	 uint8_t accel_config;
 	 uint8_t clock_config;
+	 uint8_t inten_config; //ä¸­æ–­ä½¿èƒ½å¯„å­˜å™¨
+	 uint8_t intpin_config; //ä¸­æ–­å¼•è„šé…ç½®å¯„å­˜å™¨
+
 }MPU_CONFIG;
 
 extern MPU_CONFIG mpu_config;
 
+#define	MPU_ADDR	0xD0 //IICåœ°å€å¯„å­˜å™¨0xD0
 
-#define MPU_SAMPLE_RATE_REG		0X19	//²ÉÑùÆµÂÊ·ÖÆµÆ÷
+#define MPU_SAMPLE_RATE_REG		0X19	//é‡‡æ ·é¢‘ç‡åˆ†é¢‘å™¨
 
-#define MPU_CFG_REG				0X1A	//ÅäÖÃ¼Ä´æÆ÷
-#define	GYRO_CONFIG		0x1B	//ÍÓÂİÒÇ×Ô¼ì¼°²âÁ¿·¶Î§£¬µäĞÍÖµ£º0x18(²»×Ô¼ì£¬2000deg/s)
-#define	ACCEL_CONFIG	0x1C	//¼ÓËÙ¼Æ×Ô¼ì¡¢²âÁ¿·¶Î§¼°¸ßÍ¨ÂË²¨ÆµÂÊ£¬µäĞÍÖµ£º0x01(²»×Ô¼ì£¬2G£¬5Hz)
+#define MPU_CFG_REG				0X1A	//é…ç½®å¯„å­˜å™¨
+#define	GYRO_CONFIG		0x1B	//é™€èºä»ªè‡ªæ£€åŠæµ‹é‡èŒƒå›´ï¼Œå…¸å‹å€¼ï¼š0x18(ä¸è‡ªæ£€ï¼Œ2000deg/s)
+#define	ACCEL_CONFIG	0x1C	//åŠ é€Ÿè®¡è‡ªæ£€ã€æµ‹é‡èŒƒå›´åŠé«˜é€šæ»¤æ³¢é¢‘ç‡ï¼Œå…¸å‹å€¼ï¼š0x01(ä¸è‡ªæ£€ï¼Œ2Gï¼Œ5Hz)
 #define	ACCEL_XOUT_H	0x3B
 #define	ACCEL_XOUT_L	0x3C
 #define	ACCEL_YOUT_H	0x3D
 #define	ACCEL_YOUT_L	0x3E
 #define	ACCEL_ZOUT_H	0x3F
 
-#define MPU_FIFO_EN_REG			0X23	//FIFOÊ¹ÄÜ¼Ä´æÆ÷
-#define MPU_I2CMST_STA_REG		0X36	//IICÖ÷»ú×´Ì¬¼Ä´æÆ÷
-#define MPU_INTBP_CFG_REG		0X37	//ÖĞ¶Ï/ÅÔÂ·ÉèÖÃ¼Ä´æÆ÷
-#define MPU_INT_EN_REG			0X38	//ÖĞ¶ÏÊ¹ÄÜ¼Ä´æÆ÷
-#define MPU_INT_STA_REG			0X3A	//ÖĞ¶Ï×´Ì¬¼Ä´æÆ÷
-#define MPU_USER_CTRL_REG		0X6A	//ÓÃ»§¿ØÖÆ¼Ä´æÆ÷
+#define MPU_FIFO_EN_REG			0X23	//FIFOä½¿èƒ½å¯„å­˜å™¨
+#define MPU_I2CMST_STA_REG		0X36	//IICä¸»æœºçŠ¶æ€å¯„å­˜å™¨
+#define MPU_INTBP_CFG_REG		0X37	//ä¸­æ–­/æ—è·¯è®¾ç½®å¯„å­˜å™¨
+#define MPU_INT_EN_REG			0X38	//ä¸­æ–­ä½¿èƒ½å¯„å­˜å™¨
+#define MPU_INT_STA_REG			0X3A	//ä¸­æ–­çŠ¶æ€å¯„å­˜å™¨
+#define MPU_USER_CTRL_REG		0X6A	//ç”¨æˆ·æ§åˆ¶å¯„å­˜å™¨
 
 #define	ACCEL_ZOUT_L	0x40
 #define	TEMP_OUT_H		0x41
@@ -50,7 +54,6 @@ extern MPU_CONFIG mpu_config;
 #define	PWR_MGMT_1		0x6B 
 #define	PWR_MGMT_2		0x6C
 #define	MPU_DEVICE_ID_REG	  	0x75	
-#define	MPU_ADDR	0xD0 //IICµØÖ·¼Ä´æÆ÷0x68
 
 
 

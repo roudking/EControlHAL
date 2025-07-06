@@ -1,45 +1,69 @@
 #include "Driver_pwm.h"
 
-void Driver_pwminit(void)
+//初始化硬件pwm
+void DriverPwm_start(DRIVER_CONFIG driver)
 {
-  pwm_init(&LeftDriver_Timer , LeftDriver_TIM_channel_1);
-  pwm_init(&LeftDriver_Timer , LeftDriver_TIM_channel_2);
-  pwm_init(&RightDriver_Timer, RightDriver_TIM_channel_1);
-  pwm_init(&RightDriver_Timer, RightDriver_TIM_channel_2);
+  pwm_init(driver.DriverPWM_PORT, driver.Channel[0]);
+  pwm_init(driver.DriverPWM_PORT, driver.Channel[1]);
 }
 
-void Driver_setpwm(int pwm1,int pwm2)
+//设置PWM
+static void Driver_setonechannelpwm(DRIVER_CONFIG driver,int channel, int pwm)
 {
-	if( pwm1 > 0) 
-		{
-			pwm_set(&LeftDriver_Timer, LeftDriver_TIM_channel_1, pwm1);
-			pwm_set(&LeftDriver_Timer, LeftDriver_TIM_channel_2, 0);
+    pwm_set(driver.DriverPWM_PORT,driver.Channel[channel - 1],pwm);
+}
+
+//滑行
+void Driver_setpwm(DRIVER_CONFIG driver,int pwm)
+{
+	if (driver.Pwm_polarity == 0){
+		if (pwm > 0) {
+			Driver_setonechannelpwm(driver, 1, pwm);
+			Driver_setonechannelpwm(driver, 2, 0);
+		} else if (pwm < 0) {
+			Driver_setonechannelpwm(driver, 1, 0);
+			Driver_setonechannelpwm(driver, 2, -pwm);
 		}
-	else if(pwm1 < 0)
-		{
-			pwm_set(&LeftDriver_Timer, LeftDriver_TIM_channel_1, 0);
-			pwm_set(&LeftDriver_Timer, LeftDriver_TIM_channel_2, -pwm1);
+	} else if (driver.Pwm_polarity == 1) {
+		if (pwm > 0) {
+			Driver_setonechannelpwm(driver, 1, 0);
+			Driver_setonechannelpwm(driver, 2, pwm);
+		} else if (pwm < 0) {
+			Driver_setonechannelpwm(driver, 1, -pwm);
+			Driver_setonechannelpwm(driver, 2, 0);
 		}
-	else if(pwm1 == 0)
-		{
-	 		pwm_set(&LeftDriver_Timer, LeftDriver_TIM_channel_1, LeftDriver_Timer_autoreload);
-			pwm_set(&LeftDriver_Timer, LeftDriver_TIM_channel_2, LeftDriver_Timer_autoreload);
-		}
-  if( pwm2 > 0) 
-		{
-			pwm_set(&RightDriver_Timer, RightDriver_TIM_channel_1, 0);
-			pwm_set(&RightDriver_Timer, RightDriver_TIM_channel_2, pwm2);
-		}
-	else if(pwm2 < 0)
-		{
-			pwm_set(&RightDriver_Timer, RightDriver_TIM_channel_1, -pwm2);
-			pwm_set(&RightDriver_Timer, RightDriver_TIM_channel_2, 0);
-		}
-	else if(pwm2 == 0)
-	{
-			pwm_set(&RightDriver_Timer, RightDriver_TIM_channel_1, RightDriver_Timer_autoreload);
-			pwm_set(&RightDriver_Timer, RightDriver_TIM_channel_2, RightDriver_Timer_autoreload);
+	}
+	if (pwm == 0) {
+		Driver_setonechannelpwm(driver, 1, 0);
+		Driver_setonechannelpwm(driver, 2, 0);
 	}
 }
+
+//刹车
+// void Driver_setpwm(DRIVER_CONFIG driver,int pwm)
+// {
+// 	if (driver.Pwm_polarity == 1) {
+// 		if (pwm > 0) {
+// 			Driver_setonechannelpwm(driver, 1, driver.DriverPWMTimer_autoreload - pwm);
+// 			Driver_setonechannelpwm(driver, 2, driver.DriverPWMTimer_autoreload);
+// 		} else if (pwm < 0) {
+// 			Driver_setonechannelpwm(driver, 1, driver.DriverPWMTimer_autoreload);
+// 			Driver_setonechannelpwm(driver, 2, driver.DriverPWMTimer_autoreload  + pwm);
+// 		}
+// 	} else if (driver.Pwm_polarity == 0) {
+// 		if (pwm > 0) {
+// 			Driver_setonechannelpwm(driver, 1, driver.DriverPWMTimer_autoreload);
+// 			Driver_setonechannelpwm(driver, 2, driver.DriverPWMTimer_autoreload - pwm);
+// 		} else if (pwm < 0) {
+// 			Driver_setonechannelpwm(driver, 1, driver.DriverPWMTimer_autoreload  + pwm);
+// 			Driver_setonechannelpwm(driver, 2, driver.DriverPWMTimer_autoreload);
+// 		}
+// 	}
+// 	if (pwm == 0) {
+// 		Driver_setonechannelpwm(driver, 1, driver.DriverPWMTimer_autoreload);
+// 		Driver_setonechannelpwm(driver, 2, driver.DriverPWMTimer_autoreload);
+// 	}
+// }
+
 
 

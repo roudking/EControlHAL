@@ -1,51 +1,91 @@
 #include "pid.h"
 
 
-static float xianfu(float value, float min, float max) {
+double xianfu(double value, double min, double max) {
     if (value > max) return max;
     if (value < min) return min;
     return value;
 }
 
+double position_divAPI_PID_Cal(double targetvalue,double currentvalue,double current_div,PID* pid) {
+	
+	pid->last_outvalue = pid->outvalue;
+	// 1. 计算当前偏差
+	double bias = targetvalue - currentvalue;
+
+	// 2. 计算比例项
+	double P = pid->kp * bias;
+
+	// 3. 更新积分项（累积当前偏差）
+	pid->integral += bias;
+
+	// 4. 计算积分项和微分项
+	double I = pid->ki * pid->integral;
+		  //积分限幅 
+	if(pid->integrate_xianfu > 0)
+	 {
+	  I = xianfu(I, -pid->integrate_xianfu, pid->integrate_xianfu);
+	 }
+	 
+	double D = current_div * pid->kd;
+
+	// 5. 计算总输出
+	   pid->outvalue = P + I + D;
+
+	// 6. 对输出进行限幅
+	 if(pid->out_xianfu > 0)
+	 {
+	 	 pid->outvalue = xianfu(pid->outvalue, -pid->out_xianfu, pid->out_xianfu);
+	 }
+
+	return pid->outvalue;
+}
+
 
 // 位置式 PID 计算函数（带输出限幅和积分抗饱和）
-float positionPid_Cal(float targetvalue, float currentvalue, PID* pid, float xianfu_value) {
-    // 1. 计算当前偏差
-    float bias = targetvalue - currentvalue;
+double positionPid_Cal(double targetvalue, double currentvalue, PID* pid) {
+    
+	
+		pid->last_outvalue = pid->outvalue;
+	  // 1. 计算当前偏差
+    double bias = targetvalue - currentvalue;
 
     // 2. 计算比例项
-    float P = pid->kp * bias;
+    double P = pid->kp * bias;
 
     // 3. 更新积分项（累积当前偏差）
     pid->integral += bias;
 
     // 4. 计算积分项和微分项
-    float I = pid->ki * pid->integral;
-    float D = pid->kd * (bias - pid->last_bias);
+    double I = pid->ki * pid->integral;
+	  //积分限幅 
+	 if(pid->integrate_xianfu > 0)
+	 {
+	  I = xianfu(I, -pid->integrate_xianfu, pid->integrate_xianfu);
+	 }
+    double D = pid->kd * (bias - pid->last_bias);
 
     // 5. 计算总输出
-    float output = P + I + D;
+     pid->outvalue = P + I + D;
 
-    // 6. 对输出进行限幅
-    float output_limited = xianfu(output, -xianfu_value, xianfu_value);
-
-    // 7. 积分抗饱和处理：如果输出被限幅，回退积分项
-    if (output != output_limited && pid->ki != 0.0f) {
-        // 计算限幅后的有效积分项，使得 P + I_clamped + D = output_limited
-        float I_clamped = output_limited - P - D;
-        pid->integral = I_clamped / pid->ki;  // 反向计算积分累积值
-    }
+	  // 6. 对输出进行限幅
+	  if(pid->out_xianfu > 0)
+		{
+			  pid->outvalue = xianfu(pid->outvalue, -pid->out_xianfu, pid->out_xianfu);
+		}
 
     // 8. 更新状态
     pid->last_bias = bias;      // 保存当前偏差，用于下一次微分计算
-    pid->outvalue = output_limited; // 记录限幅后的输出值
 
-    return output_limited;
+    return pid->outvalue;
 }
 
-float deltaPid_Cal(float targetvalue,float currentvalue,PID* pid,float xianfu_value)
+double deltaPid_Cal(double targetvalue,double currentvalue,PID* pid)
 {
-	float bias,current_bias,outputvalue; 
+	
+		pid->last_outvalue = pid->outvalue;
+	
+	double bias,current_bias,outputvalue; 
 	
 	current_bias = targetvalue - currentvalue;
 
@@ -55,16 +95,20 @@ float deltaPid_Cal(float targetvalue,float currentvalue,PID* pid,float xianfu_va
 
 	pid->last_bias = current_bias;
 	
-  pid -> outvalue = xianfu(pid -> outvalue,-xianfu_value,xianfu_value);
-	
+	if(pid->out_xianfu > 0)
+	{
+	  pid -> outvalue = xianfu(pid -> outvalue,-pid->out_xianfu,pid->out_xianfu);
+	}
+
 	return pid -> outvalue;
 }
 
 void pidmemory_clear(PID* pid)
 {
 	  pid->integral  = 0;
-    pid -> last_bias = 0;
+      pid -> last_bias = 0;
 	  pid -> outvalue  = 0;
+	  pid->last_outvalue = 0;
 }
 
 

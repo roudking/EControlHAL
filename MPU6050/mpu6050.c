@@ -12,28 +12,48 @@ KALMAN KalmanY = {
         .R_measure = 0.03f,
 };
 
-void Creat_mpu(MPU *mpu,MPU_CONFIG config_struct,KALMAN kalmanx,KALMAN kalmany)
+
+void Mpu_creat(MPU *mpu,MPU_CONFIG config_struct,KALMAN Kalmanx,KALMAN Kalmany)
 {
    mpu->config = config_struct;
-	 mpu->KalmanX = kalmanx;
-	 mpu->KalmanY = kalmany;
+	 mpu->kalmanx = Kalmanx;
+	 mpu->kalmany = Kalmany;
+}
+
+
+int Mpu_test_who_am_i(MPU *mpu)
+{
+    mpu_iicgetdata(mpu->config,MPU_DEVICE_ID_REG,&(mpu->config.Who_am_I_ID),1);
+	   return mpu->config.Who_am_I_ID;
 }
 
 void Mpu_init(MPU *mpu)
 {
-	    delay_ms(1000);
-		mpu_iicsend(mpu->config, PWR_MGMT_1,   &(mpu_config.clock_config), 1);
-	  mpu_iicsend(mpu->config, MPU_CFG_REG,  &(mpu_config.DLFP_Config),  1); 
-    mpu_iicsend(mpu->config, MPU_SAMPLE_RATE_REG,&(mpu_config.samping_rate),1) ;
-	  mpu_iicsend(mpu->config, GYRO_CONFIG,  &(mpu_config.gyro_config),  1);
-	  mpu_iicsend(mpu->config, ACCEL_CONFIG, &(mpu_config.accel_config), 1);
+	  while(Mpu_test_who_am_i(mpu) != 0x68);
+	
+		  uint8_t c = 0x80;
+	  mpu_iicsend(mpu->config, PWR_MGMT_1,   &c, 1);  // 电源管理寄存器
+		Debugger_printf("MPU Init Success\n");
+		  delay_ms(1000);
+
+		mpu_iicsend(mpu->config, PWR_MGMT_1,   &(mpu_config.clock_config), 1);  // 电源管理寄存器
+	    mpu_iicsend(mpu->config, MPU_CFG_REG,  &(mpu_config.DLFP_Config),  1);   // 配置寄存器
+        mpu_iicsend(mpu->config, MPU_SAMPLE_RATE_REG,&(mpu_config.samping_rate),1) ;// 采样率分频器寄存器
+	    mpu_iicsend(mpu->config, GYRO_CONFIG,  &(mpu_config.gyro_config),  1);  // 陀螺仪配置寄存器
+	    mpu_iicsend(mpu->config, ACCEL_CONFIG, &(mpu_config.accel_config), 1);  // 加速度计配置寄存器
+        mpu_iicsend(mpu->config, MPU_INTBP_CFG_REG, &(mpu_config.intpin_config), 1);  // 中断引脚配置寄存器
+        mpu_iicsend(mpu->config, MPU_INT_EN_REG,   &(mpu_config.inten_config), 1);  // 中断使能寄存器
+  
+
 }
 
-void Mpu_test_who_am_i(MPU *mpu)
+uint8_t Mpu_clearinterrupt(MPU *mpu)
 {
-    mpu_iicgetdata(mpu->config,MPU_DEVICE_ID_REG,&(mpu->config.Who_am_I_ID),1);
+    uint8_t buf;
+    // 读取中断状态寄存器，清除中断标志
+    mpu_iicgetdata(mpu->config, MPU_INT_STA_REG, &buf, 1);
+    return buf;
 }
-	
 
 static void Mpu_getdata_original(MPU_RAW *mpu_raw,MPU_CONFIG config)
 {
@@ -50,9 +70,11 @@ static void Mpu_getdata_original(MPU_RAW *mpu_raw,MPU_CONFIG config)
     mpu_raw->gyro_z  = (int16_t)((buf[12]<< 8) | buf[13]);
 }
 
-// ���̶�Ӧ�ķ�ĸ�������� ��2 g �� ��250 ��/s��
+// ���̶�Ӧ�ķ�ĸ�������� ��2 g �� ��2000 ��/s��
 const float accel_sens = 16384.0f;
-const float gyro_sens  = 131.0f;
+const float gyro_sens  = 16.4f;
+
+
 
 static void Mpu_convert_raw_to_data(MPU_DATA *mpu_data,MPU_RAW *mpu_raw)
 {
@@ -65,15 +87,16 @@ static void Mpu_convert_raw_to_data(MPU_DATA *mpu_data,MPU_RAW *mpu_raw)
     mpu_data->gz = (float)mpu_raw->gyro_z / gyro_sens;
 }
 
-void Mpu_getdata(MPU *mpu) {
+void Mpu_getdata(MPU *mpu) 
+{
 	  Mpu_getdata_original(&(mpu->mpu_raw),mpu->config);
     Mpu_convert_raw_to_data(&(mpu->mpu_data),&(mpu->mpu_raw));
 }
 
 
-
-static double Kalman_getAngle(KALMAN *Kalman, double newAngle, double newRate, double dt) {
-    double rate = newRate - Kalman->bias;
+#define RAD_TO_DEG 57.295779513082320876798154814105
+static float Kalman_getAngle(KALMAN *Kalman, float newAngle, float newRate, float dt) {
+    float rate = newRate - Kalman->bias;
     Kalman->angle += dt * rate;
 
     Kalman->P[0][0] += dt * (dt * Kalman->P[1][1] - Kalman->P[0][1] - Kalman->P[1][0] + Kalman->Q_angle);
@@ -81,17 +104,17 @@ static double Kalman_getAngle(KALMAN *Kalman, double newAngle, double newRate, d
     Kalman->P[1][0] -= dt * Kalman->P[1][1];
     Kalman->P[1][1] += Kalman->Q_bias * dt;
 
-    double S = Kalman->P[0][0] + Kalman->R_measure;
-    double K[2];
+    float S = Kalman->P[0][0] + Kalman->R_measure;
+    float K[2];
     K[0] = Kalman->P[0][0] / S;
     K[1] = Kalman->P[1][0] / S;
 
-    double y = newAngle - Kalman->angle;
+    float y = newAngle - Kalman->angle;
     Kalman->angle += K[0] * y;
     Kalman->bias += K[1] * y;
 
-    double P00_temp = Kalman->P[0][0];
-    double P01_temp = Kalman->P[0][1];
+    float P00_temp = Kalman->P[0][0];
+    float P01_temp = Kalman->P[0][1];
 
     Kalman->P[0][0] -= K[0] * P00_temp;
     Kalman->P[0][1] -= K[0] * P01_temp;
@@ -118,45 +141,41 @@ void Mpu_getKalmandata(MPU *mpu){
 
  //���� 4. �������ں� ����  
     // 4.1 ����ʱ������ dt���룩
-    double dt = (HAL_GetTick() - mpu_timer) * 0.001;
-    mpu_timer = HAL_GetTick();
+    double dt = 0.005;
 
     // 4.2 ���ٶȼ�˲ʱ Roll/Pitch ����
-    double roll_sqrt = sqrt(
+    float roll_sqrt = sqrt(
         mpu->mpu_raw.accel_x * mpu->mpu_raw.accel_x +
         mpu->mpu_raw.accel_z * mpu->mpu_raw.accel_z);
-    double roll  = (roll_sqrt > 0.0)
-                   ? atan((double)mpu->mpu_raw.accel_y / roll_sqrt) * RAD_TO_DEG
+    float roll  = (roll_sqrt > 0.0)
+                   ? atan((float)mpu->mpu_raw.accel_y / roll_sqrt) * RAD_TO_DEG
                    : 0.0;
-    double pitch = atan2(
-                       -(double)mpu->mpu_raw.accel_x,
-                       (double)mpu->mpu_raw.accel_z
+    float pitch = atan2(
+                       -(float)mpu->mpu_raw.accel_x,
+                       (float)mpu->mpu_raw.accel_z
                    ) * RAD_TO_DEG;
 
-    // 4.3 �����ǣ�Y ��ǣ��˲������� ��90�� ͻ��
-    if ((pitch < -90.0 && mpu->KalmanAngleY > 90.0) ||
-        (pitch >  90.0 && mpu->KalmanAngleY < -90.0))
+    if ((pitch < -90.0 && mpu->roll > 90.0) ||
+        (pitch >  90.0 && mpu->roll < -90.0))
     {
-        mpu->KalmanY.angle       = pitch;
-        mpu->KalmanAngleY   = pitch;
+        mpu->kalmany.angle       = pitch;
+        mpu->roll   = pitch;
     }
     else
     {
-        mpu->KalmanAngleY = Kalman_getAngle(
-            &(mpu->KalmanY),
+        mpu->roll = Kalman_getAngle(
+            &(mpu->kalmany),
             pitch,
             mpu->mpu_data.gy,
             dt
         );
     }
 
-    // 4.4 ���������ת�� 90�㣬���� X ���������
-    if (fabs(mpu->KalmanAngleY) > 90.0)
+    if (fabs(mpu->roll) > 90.0)
         mpu->mpu_data.gx = -mpu->mpu_data.gx;
 
-    // 4.5 ����ǣ�X ��ǣ�����������
-    mpu->KalmanAngleX = Kalman_getAngle(
-        &(mpu->KalmanX),
+    mpu->pitch = Kalman_getAngle(
+        &(mpu->kalmanx),
         roll,
         mpu->mpu_data.gy,
         dt
