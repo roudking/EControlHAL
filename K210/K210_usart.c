@@ -12,22 +12,7 @@ void K210_uartinit(void)
 {
   // Set up UART callbacks
    usart_callbackregister(&K210_UART, K210_uartcallback);
-//   usart_rx_it_start(&K210_UART,&k210_uctemp);
-}
-
-void K210_startit(void)
-{
    usart_rx_it_start(&K210_UART,&k210_uctemp);
-}
-
-void K210_stopit(void)
-{
-	 usart_rx_it_stop(&K210_UART);
-}
-
-void K210_uartsend(unsigned char *p_data,unsigned int uiSize)
-{
-   usart_transmit(&K210_UART, p_data, uiSize);
 }
 
 static void K210_uartcallback(void)

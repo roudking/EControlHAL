@@ -8,11 +8,9 @@
 #include "stdlib.h"
 #include "K210.h"
 
-#define K210_UART huart3 
+#define K210_UART huart2 
+#define K210_printf(fmt, ...)  usart_printf(&K210_UART, fmt, ##__VA_ARGS__)
 
 void K210_uartinit(void);
-void K210_uartsend(unsigned char *p_data,unsigned int uiSize);
-void K210_startit(void);
-void K210_stopit(void);
 
 #endif
