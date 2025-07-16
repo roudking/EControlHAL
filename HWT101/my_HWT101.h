@@ -5,7 +5,7 @@
 #include "stdio.h"
 #include "wit_c_sdk.h"
 #include "hwt101_uart.h"
-#include "hwt101_delay.h"
+#include "my_delay.h"
 
 #define yaw_id 2
 
@@ -14,13 +14,19 @@ typedef struct
 {
   	float fAcc[3];
    	float fGyro[3];
-	  float fAngle[3];
+	float fAngle[3];
+
+    float current_yaw;
+    float last_yaw;
+    float real_yaw;
+
+    float zero_yaw;
 	
-}HWT101_DATA;
+}IMU;
 
 void Myhwt101_init(void);
-void Myhwt101_getdata(HWT101_DATA *hwt_data);
-void Myhwt101_resetz(void);
+void Myhwt101_getdata(IMU *hwt_data);
+void Myhwt101_resetz(IMU *imu);      
 
 
 #endif
