@@ -1,107 +1,145 @@
-
 #ifndef _CAR_H
 #define _CAR_H
 
 #include "Driver.h"
-#include "Nvigation.h"
-#include "my_HWT101.h"
-#include "HuiduSensor.h"
-#include "Resberry_Pi.h"
-#include "Beep.h"
 #include "Servo.h"
-#include "Stepper.h"
-#include "Key.h"
-#include "K210.h"
+#include "my_HWT101.h"
+#include "Raspberry_Pi.h"
 #include "Laser.h"
-#include "OLED.h"
-#include "math.h"
+#include "Key.h"
+#include "K230.h"
+#include "K210.h"
 
-extern const double require_speed;
-
-typedef enum 
+typedef struct
 {
-	 wait_start,
-	 goto_line,
-   goto_turnright,
-	 goto_turnleft,
-	 goto_allwhite,
-   turnright,
-	 turnleft,
-	 beep,
-	 stop,
-	 voice_trace,
-	 go_strightoverflow,
-	 go_avoidance,
-	 gobackto_line,
-	 getnum,
-	turnleftto_line,
-	gountil_end,
-	 turnto_end,
-	 resethwt101
-}MASK_ASSIGNMENT;
+    int turnstatus;
+    int trance_status;
+}CAR_STATUS;
 
 typedef enum
 {
-	 not_started,
-   turning,
-   complite_turn
-}TURN_STATE;
+   wait_keyon,
+   wait_keyoff,
+   get_num,
+   goto_T,
+   goto_N,
+   go_over,
+   turnright,
+   turnleft,
+   turnback,
+   mask_load,
+   echo_park,
+   wait_run,
+   wait_start,
+   get_mode,
+   stop
+}MASK_ENUM;
 
 typedef struct
 {
-  HWT101_DATA angle;
-	PID turn_pid;
-	PID trace_pid;
-	TURN_STATE turn_state;
-	float targetyaw;
-	float last_targetyaw;
-}IMU;
+    MASK_ENUM mask_list[200];
+    int mask_num;
+    int mask_pc;
+}MASK;
 
-typedef struct
+
+typedef struct 
 {
-   MOTOR motor1;
-	 MOTOR motor2;
-	 HUIDU huidu;
-	 IMU imu;
-	 SERVO servo;
-	 STEPPER stepper;
-	 RESBERRY resberry;
-	 K210 k210;
-	 LASER laser;
-	 My_KEY key;
-	 NVIGATION nvigation;
-	 int distance;
+    MOTOR motor1;
+    MOTOR motor2;
+    SERVO servo;
+    RASPBERRY raspberry;
+    K230  k230;
+    K210  k210;
+    LASER rled;
+    LASER gled;
+    LASER yled;
+    IMU imu;
+    MYKEY key;
 
-	 MASK_ASSIGNMENT mask_assignment[100]; 
+    PID trance_pid;
+    PID turn_pid;
+    PID position_pid;
 
+    float basespeed;// 基础速度
+    int   distance; // 距离
+
+    volatile MASK mask;
+    int target_num; // 目标数字
+
+    CAR_STATUS status;
 }CAR;
 
-void Car_creatimu(IMU *imu,PID tracePid,PID turnPid);
-void Car_creatmotor(MOTOR *motor,PID pid,POSITION position);
-void Car_creatservo(SERVO *servo,float zero_angle);
-void Car_creatstepper(STEPPER *stepper,int id);
-void Car_settargetyaw(CAR *car,float target_yaw);
+//已整定pid
+extern PID pidL,pidR,pidtrance,pidturn,pidposition;
+
+//载入任务
+void Car_setmask(CAR *car,MASK mask);
+
+//设置巡线角度环PID
+void Car_settrancepid(CAR *car, PID trancepid);
+float Car_trancepidcal(CAR *car);
+
+//设置转向环PID 
+void Car_setturnpid(CAR *car, PID turnpid);
+float Car_turnpidcal(CAR *car);
+
+//设置位置环PID
+void Car_setpositionpid(CAR *car, PID positionpid);
+float Car_positionpidcal(CAR *car);
+
+//获得左右轮差速
+float Car_getdeltaspeed(CAR *car);
+
+//设置基础速度
+void Car_setbasespeed(CAR *car, float basespeed);
+//获取当前距离
 void Car_getdistance(CAR *car);
-void Car_calrealspeed(float *real_speed,CAR *car);
-void Car_returnnum(CAR *car,int* num1,int *num2);
 
-int Car_gotolinefuc(CAR *car);
-int Car_gostrightoverflowfuc(CAR *car);
-int Car_gototurnrightfuc(CAR *car);
-int Car_gototurnleftfuc(CAR *car);
-int Car_turnrightfuc(CAR *car);
-int Car_turnleftfuc(CAR *car);
+//任务流程
+//stop
 int Car_stopfuc(CAR *car);
-int Car_beepfuc(CAR *car);
-int Car_goavoidance(CAR *car);
-int Car_gobacktolinefuc(CAR *car);
-int Car_gotoallwhitefuc(CAR *car);
-int Car_waitstartfuc(CAR *car);
-int Car_getnumberfuc(CAR *car);
-int Car_turnlefttolinefuc(CAR *car);
-int Car_gountilend(CAR *car);
-int Car_turntoend(CAR *car);
-int Car_resethwt101fuc(CAR *car);
-int Car_voicetrance(CAR *car);
 
-#endif 
+//wait_keyon
+int Car_waitkeyonfuc(CAR *car);
+
+//wait_keyoff
+int Car_waitkeyofffuc(CAR *car);
+
+//turnright
+int Car_turnrightfuc(CAR *car);
+
+//turnleft
+int Car_turnleftfuc(CAR *car);
+
+//turnback
+int Car_turnbackfuc(CAR *car);
+
+//goto_T
+int Car_gotoTfuc(CAR *car); 
+
+//goto_N
+int Car_gotoNfuc(CAR *car);
+
+//get_num
+int Car_getnumfuc(CAR *car);
+
+//go_over
+int Car_gooverfuc(CAR *car);
+
+//get_mode
+int Car_getmodefuc(CAR *car);
+
+//echo_park
+int Car_echoparkfuc(CAR *car);
+
+//wait_start
+int Car_waitstartfuc(CAR *car);
+
+//wait_run
+int Car_waitrunfuc(CAR *car);
+
+//mask_load
+int Car_maskloadfuc(CAR *car);
+
+#endif

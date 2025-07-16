@@ -1,609 +1,535 @@
 #include "Car.h"
 
-#define motor_D 67.0f //直径67.0mm
-#define encoder_singlecount 1456.0f
-#define require_realspeed 5.0f  // 5mm/10ms
 
-const double mmpercnt = 3.1415926 * motor_D/encoder_singlecount;
-const double require_speed = require_realspeed / mmpercnt ;
-//const float  my_speed = 25.0;
-const float  my_speed = require_speed;
+//已整定pid
+PID pidL = {
+    .kp = 170.5,
+    .ki =43.0,
+    .kd = 0.0,
+    .out_xianfu = 7199.0
+};
+PID pidR = {
+    .kp = 180.5,
+    .ki =43.0,
+    .kd = 0.0,
+    .out_xianfu = 7199.0
+};
 
-void Car_creatimu(IMU *imu,PID tracePid,PID turnPid)
+PID pidtrance = {
+    .kp = 0.75,
+    .ki = 0.00,
+    .kd = 2.77,
+    .out_xianfu = 6.5
+};
+
+PID pidturn = {
+    .kp = 0.75,
+    .ki = 0.00,
+    .kd = 3.37,
+    .out_xianfu = 35.0
+};
+
+PID pidposition = {
+    .kp = 9.5,
+    .ki = 0.00,
+    .kd = 11.0,
+    .out_xianfu = 20.0
+};
+
+//载入任务
+static int Mask_getmasknum(MASK mask)
 {
-	  imu->trace_pid.kp = tracePid.kp;
-	  imu->trace_pid.ki = tracePid.ki;
-		imu->trace_pid.kd = tracePid.kd;
-	  pidmemory_clear(&(imu->trace_pid));
-	
-	  imu->turn_pid.kp = turnPid.kp;
-	  imu->turn_pid.ki = turnPid.ki;
-		imu->turn_pid.kd = turnPid.kd;
-	  pidmemory_clear(&(imu->turn_pid));
-	
-	  imu->targetyaw = 0.0;
-	  imu->turn_state = not_started;
-	  imu->last_targetyaw = 0.0;
+    return sizeof(mask.mask_list)/sizeof(mask.mask_list[0]);
 }
 
-void Car_creatmotor(MOTOR *motor,PID pid,POSITION position)
+void Car_setmask(CAR *car,MASK mask)
 {
-	  Driver_creatmotor(motor, pid, position);
+    car->mask = mask;
+    car->mask.mask_num = Mask_getmasknum(mask);
+	car->mask.mask_pc = 0; // 初始化mask_pc为0
 }
 
-void Car_creatstepper(STEPPER *stepper,int id)
+void Car_settrancepid(CAR *car, PID trancepid)
 {
-   Stepper_creatstepper(stepper,id);
+    car->trance_pid = trancepid;
 }
 
-void Car_settargetyaw(CAR *car,float target_yaw)
+float Car_trancepidcal(CAR *car)
 {
-		car->imu.last_targetyaw = car->imu.targetyaw;
-    car->imu.targetyaw = target_yaw;
+    return positionPid_Cal(car->imu.zero_yaw, car->imu.real_yaw, &(car->trance_pid));
 }
 
-void Car_creatservo(SERVO *servo,float zero_angle)
+void Car_setturnpid(CAR *car, PID turnpid)
 {
-    Servo_settargetangle(servo,zero_angle);
-	  Servo_gotoangle(servo);
+    car->turn_pid = turnpid;
 }
 
-void Car_setservotargetangle(SERVO *servo,float angle)
+float Car_turnpidcal(CAR *car)
 {
-		Servo_settargetangle(servo,angle);
+    return positionPid_Cal(car->imu.zero_yaw, car->imu.real_yaw, &(car->turn_pid));
 }
 
-void Car_servogotoangle(SERVO *servo)
+void Car_setpositionpid(CAR *car, PID positionpid)
 {
-	  Servo_gotoangle(servo);
+    car->position_pid = positionpid;
 }
 
-void Car_laseron(LASER *laser)
+float Car_positionpidcal(CAR *car)
 {
-   Laser_on(laser);
+    return positionPid_Cal(0.0, car->k230.pos, &(car->position_pid));
 }
 
-void Car_laseroff(LASER *laser)
+float Car_getdeltaspeed(CAR *car)
 {
-	 Laser_off(laser);
+     if(car->status.turnstatus == 1){
+      //判定转弯完成,进行状态转换
+       if(fabs(car->imu.real_yaw - car->imu.zero_yaw) < 2.0){  
+          car->status.turnstatus = 0;
+       }
+      return  Car_turnpidcal(car);
+     }
+
+     else if(car->status.turnstatus == 0){
+        if(car->basespeed == 0.0)
+        {
+            return Car_trancepidcal(car);
+        }
+        else
+        {
+            return Car_trancepidcal(car) + Car_positionpidcal(car);
+        }
+     }
+
 }
 
+//设置基础速度
+void Car_setbasespeed(CAR *car, float basespeed)
+{
+    car->basespeed = basespeed;
+}
+
+//获取当前距离
 void Car_getdistance(CAR *car)
 {
-    car->distance += (car->motor1.currentspeed + car->motor2.currentspeed)/2;
+   car->distance += (car->motor1.currentspeed + car->motor2.currentspeed) / 2.0;
+}   
+
+
+
+// typedef enum
+// {
+//     stop, //停止
+//     wait_keyon, //等待按键放置药品  
+//     wait_keyoff, //等待按键取走药品
+//     turnright, //右转
+//     turnleft, //左转
+//     turnback, //掉头
+//     go_over, //过弯
+//     goto_T, //到达T路口
+//     goto_N, //到达N路口
+//     get_num, //获取数字
+//     get_mode, //获取模式
+//     get_run, //获取运行状态
+//     echo_park, //回复到位
+//     mask_load //加载任务流程
+//     wait_start //等待开始
+// }MASK_ENUM;
+
+//任务流程书写；
+//stop
+int Car_stopfuc(CAR *car)
+{
+    Car_setbasespeed(car,0.0);
+    return 1;
 }
 
-void Car_cleardistance(CAR *car)
+//wait_keyon
+int Car_waitkeyonfuc(CAR *car)
 {
-    car->distance = 0;
+    Key_read(&(car->key));
+    if(car->key.pin_value == 1)
+    {
+        return 1; //药品已放置
+    }
+    else 
+    {
+        return 0; //药品未放置
+    }
 }
 
-void Car_clearhuidustate(CAR *car)
+//wait_keyoff
+int Car_waitkeyofffuc(CAR *car)
 {
-	  car -> huidu.state = incomplete;
-}
-
-void Car_setstepperangle(CAR *car,float target_angle)
-{
-    Stepper_setangle(&(car->stepper),target_angle);
-}
-
-void Car_startk210uart(CAR *car)
-{
-   K210_startit();
-}
-
-void Car_stopk210uart(CAR *car)
-{
-   K210_stopit();
-}
-
-void Car_getvoiceangele(CAR *car)
-{
-    K210_getangle(&(car->k210));
-}
-
-void Car_clearturnstate(CAR *car)
-{
-    car->imu.turn_state = not_started;
-}
-
-void Car_getrecognizegreen_area(CAR *car)
-{
-     Resberry_getgreen_area(&(car->resberry));
-}
-
-void Car_resberrysendgetnumercmd(CAR *car)
-{
-	  Resberry_sendgetnumercmd(&(car->resberry));
-}
-
-void Car_resberrygetstate(CAR *car)
-{
-   Resberry_getstate(&(car->resberry));
-}
-
-void Car_resberrygetnumber(CAR *car)
-{
-	 Resberry_getnumber(&(car->resberry));
-}
-
-void Car_beepon(void)
-{
-   Beep_on();
-}
-
-void Car_beepoff(void)
-{
-	 Beep_off();
-}
-
-void Car_setangleforward(CAR *car)
-{
-   Car_setservotargetangle(&(car->servo),90.0);
-	 Car_servogotoangle(&(car->servo));
-}
-
-void Car_setanglelateral(CAR *car)
-{
-	 Car_setservotargetangle(&(car->servo),40);
-	 Car_servogotoangle(&(car->servo));
-}
-
-void Car_getkeyvalue(CAR *car)
-{
-    Key_getvalue(&(car->key));
+    Key_read(&(car->key));
+    if(car->key.pin_value == 0)
+    {
+        return 1; //药品已取走
+    }
+    else 
+    {
+        return 0; //药品未取走
+    }
 }
 
 
-#define time_sleep 500 //ms
-int Car_stop(CAR *car)
-{
-  	Driver_setmotor_targetspeed(&(car->motor1),0);
-	  Driver_setmotor_targetspeed(&(car->motor2),0);
-		 
-		Car_clearhuidustate(car);
-		Car_cleardistance(car);
-		Car_clearturnstate(car);
-	
-		static int i = 1;
-		if(i < time_sleep/10)
-		{
-			i++;
-		  return 0;
-		}
-		else 
-		{
-			i = 1;
-			return 1;
-		}
-}
-
-void Car_cal_and_settracelinespeed(CAR *car,float speed)
-{
-		float imubias = positionPid_Cal(car->imu.targetyaw,car->imu.angle.fAngle[yaw_id],&(car->imu.trace_pid),5.0);
-	  float huidubias = car->huidu.huidu_bias;
-	  float final_bias = imubias + huidubias;
-	
-    Driver_setmotor_targetspeed(&(car->motor1),(int)(speed - final_bias));
-	  Driver_setmotor_targetspeed(&(car->motor2),(int)(speed + final_bias));
-}
-void Car_cal_and_settracelinespeed_withoutHuidusensor(CAR *car,float speed)
-{
-		float imubias = positionPid_Cal(car->imu.targetyaw,car->imu.angle.fAngle[yaw_id],&(car->imu.trace_pid),5.0);
-	  float final_bias = imubias;
-    Driver_setmotor_targetspeed(&(car->motor1),(int)(speed - final_bias));
-	  Driver_setmotor_targetspeed(&(car->motor2),(int)(speed + final_bias));
-}	
-
-void Car_cal_and_setturnspeed(CAR *car)
-{
-  int turn_speed = positionPid_Cal(car->imu.targetyaw, car->imu.angle.fAngle[yaw_id], &(car->imu.turn_pid), 7.0);
-	  Driver_setmotor_targetspeed(&(car->motor1),-turn_speed);
-	  Driver_setmotor_targetspeed(&(car->motor2),turn_speed);
-}
-
-void Car_calrealspeed(float *real_speed,CAR *car)
-{
-   *real_speed = (car->motor1.currentspeed + car->motor2.currentspeed) / 2.0 * mmpercnt * 100.0;
-}
-
-void Car_returnnum(CAR *car,int* num1,int *num2)
-{
-   *num1 = car->resberry.num[0];
-	 *num2 = car->resberry.num[1];
-}
-
-
-
-#define overflow 250
-#define overflow_speed 15
-int Car_gostrightoverflowfuc(CAR *car)
-{
-   if(car->distance <= overflow)
-	 {
-	  Driver_setmotor_targetspeed(&(car->motor1),(int)overflow_speed);
-	  Driver_setmotor_targetspeed(&(car->motor2),(int)overflow_speed);
-		 return 0;
-	 }
-	 else 
-	 {
-	   return 1;
-	 }
-}
-
-
-
-int Car_gotolinefuc(CAR *car)
-{
-		Car_cal_and_settracelinespeed(car,my_speed);
-    Huidu_getstate(&(car->huidu),3,6);
-	
-	 if(car->huidu.state == in_the_line)
-	 {
-		 Car_cleardistance(car);
-		 return 1;
-	 }
-		else return 0;
-}
-
-
-
-int Car_gototurnrightfuc(CAR *car)
-{
-		Car_cal_and_settracelinespeed(car,my_speed);
-		Huidu_getstate(&(car->huidu),5,8);
-	
-   if(car->huidu.state == in_the_turnright)
-	 {
-	    Car_cleardistance(car);
-  		return 1;
-	 }
-	 else return 0;
-}
-
-int Car_gototurnleftfuc(CAR *car)
-{
- 		Car_cal_and_settracelinespeed(car,my_speed);
-		Huidu_getstate(&(car->huidu),1,4);
-	 if(car->huidu.state == in_the_turnleft)
-	 {
-		 Car_cleardistance(car);
-  		return 1;
-	 }
-	 else return 0;
-}
-
-#define yaw_threshold 1.0f
+//turnright
 int Car_turnrightfuc(CAR *car)
 {
-	if(car->imu.turn_state == not_started)
-	{
-		Car_settargetyaw(car,car->imu.targetyaw - 85);
-		car->imu.turn_state = turning;
-		return 0;
-	}
-  else if(car->imu.turn_state == turning)
-	{
-			Car_cal_and_setturnspeed(car);
-		  if(fabs(car->imu.angle.fAngle[yaw_id] - car->imu.targetyaw) < yaw_threshold)
-			{
-		Driver_setmotor_targetspeed(&(car->motor1),0);
-	  Driver_setmotor_targetspeed(&(car->motor2),0);
-			  car->imu.turn_state = complite_turn;
-			}
-			return 0;
-	}
-	else if(car->imu.turn_state == complite_turn)
-	{
-		Car_clearturnstate(car);
-		Car_clearhuidustate(car);
-	   return 1;
-	}
-	else return 0;
+   static int pc = 0;
+   if(pc == 0)
+   {
+       car->status.turnstatus = 1;
+       car->imu.zero_yaw = car->imu.zero_yaw - 90.0; //设置转弯角度
+       pc++;
+       return 0; //转弯开始
+   }
+   else {
+     if(car->status.turnstatus == 1) {
+       return 0; //保持当前状态
+    }
+      else {
+       pc = 0; //重置计数器
+       return 1; //转弯完成
+     }
+
+   }
 }
 
+//turnleft
 int Car_turnleftfuc(CAR *car)
 {
-	if(car->imu.turn_state == not_started)
-	{
-		Car_settargetyaw(car,car->imu.targetyaw + 85);
-		car->imu.turn_state = turning;
-		return 0;
-	}
-  else if(car->imu.turn_state == turning)
-	{
-			Car_cal_and_setturnspeed(car);
-		  if(fabs(car->imu.angle.fAngle[yaw_id] - car->imu.targetyaw) < yaw_threshold)
-			{
-		Driver_setmotor_targetspeed(&(car->motor1),0);
-	  Driver_setmotor_targetspeed(&(car->motor2),0);
-			  car->imu.turn_state = complite_turn;
-			}
-			return 0;
-	}
-	else if(car->imu.turn_state == complite_turn)
-	{
-		Car_clearturnstate(car);
-		Car_clearhuidustate(car);
-	   return 1;
-	}
-	else return 0;
+   static int pc = 0;
+   if(pc == 0)
+   {
+       car->status.turnstatus = 1;
+       car->imu.zero_yaw = car->imu.zero_yaw + 90.0; //设置转弯角度
+       pc++;
+       return 0; //转弯开始
+   }
+   else {
+     if(car->status.turnstatus == 1) {
+       return 0; //保持当前状态
+    }
+      else {
+       pc = 0; //重置计数器
+       return 1; //转弯完成
+      }
+
+    }
 }
 
-int Car_stopfuc(CAR* car)
+//turnback
+int Car_turnbackfuc(CAR *car)
 {
-	return Car_stop(car);
+   static int pc = 0;
+   if(pc == 0)
+   {
+       car->status.turnstatus = 1;
+       car->imu.zero_yaw = car->imu.zero_yaw + 180.0; //设置转弯角度
+       pc++;
+       return 0; //转弯开始
+   }
+   else {
+     if(car->status.turnstatus == 1) {
+       return 0; //保持当前状态
+    }
+      else {
+       pc = 0; //重置计数器
+       return 1; //转弯完成
+     }
+
+   }
 }
 
-#define beep_time 200//ms
-int Car_beepfuc(CAR *car)
+//get_num
+int Car_getnumfuc(CAR *car)
 {
-	static int cnt = 1;
-	if(cnt <= 3)
-	{
-		static int i = 1;
-		if(i <= beep_time/10)
-			{
-				i++;
-				Car_beepon();
-			}
-		else if(i < 2 * beep_time/10)
-			{
-				i++;
-				Car_beepoff();
-			}
-		else if(i == 2 * beep_time/10){
-				Car_beepoff();
-				i=1;
-				cnt++;
-		 }
-		return 0;
-	}
-	
-   else 
-	 {
-		 cnt = 1;
-	   return 1;
-	 }
+    static int pc = 0;
+    if(pc == 0)
+    {
+        K210_setnumstatus(1); //启动K210获取数字 标志位置位
+        pc++;
+        return 0; //开始获取
+    }
+    else {
+        K210_getnumstatus(&(car->k210));
+        if(car->k210.status.numstatus == 1) {
+            return 0; //保持当前状态
+        }
+        else {
+           K210_getnumdata(&(car->k210)); //获取数字
+            pc = 0; //重置计数器
+            return 1; //获取完成
+        }
+    }
 }
 
-const float avoid_speed = 10.0;
-const int green_area_threshold = 36000;
-const int avoid_overflow = 600;
-int Car_goavoidance(CAR *car)
+
+//go_over
+const float go_over_distance = 550.0; //过弯距离
+int Car_gooverfuc(CAR *car)
 {
-	  Car_cal_and_settracelinespeed(car,avoid_speed);  
-//	  Car_getrecognizegreen_area(car);
-//	  printf("%d\n",car->resberry.green_area);
- 
-	  if(car->distance >= avoid_overflow	|| car->resberry.green_area >= green_area_threshold)
-		{
-		  return 1;
-		}
-		else return 0;
+    static int pc = 0;
+    if(pc == 0)
+    {
+     car->distance = 0; //重置距离
+        pc++;
+        return 0; //开始转弯
+    }
+    else {
+        if(car->distance < go_over_distance) 
+        {
+            return 0; //保持当前状态
+        }
+        else {
+            car->distance = 0; //重置距离
+            pc = 0; //重置计数器
+            return 1; //过弯完成
+        }
+    }
 }
 
-
-const float back_speed = 5.0;
-int Car_gobacktolinefuc(CAR *car)
+//goto_T
+const float basespeed = 45.0; //基础速度
+int Car_gotoTfuc(CAR *car)
 {
-   Car_cal_and_settracelinespeed(car,-back_speed); 
-    Huidu_getstate(&(car->huidu),3,6);
-	
-	if(car->huidu.state == in_the_line)
-	 {
-		 Car_cleardistance(car);
-		 return 1;
-	 }
-		else return 0;
-	
+    Car_setbasespeed(car, basespeed);
+    K230_gettstatus(&(car->k230));
+    if(car->k230.status.tstatus == 1) {
+        //到达T路口，执行相应操作
+        return 1; //到达T路口
+    }
+    else {
+        //未到达T路口，继续前进
+        return 0; //保持当前状态
+    }
+
 }
 
-int Car_gotoallwhitefuc(CAR *car)
+//goto_N
+int Car_gotoNfuc(CAR *car)
 {
-   Car_cal_and_settracelinespeed(car,my_speed); 
-	
-	 Huidu_getstate(&(car->huidu),1,8);
-	
-		if(car->huidu.state == in_the_allwhite)
-	 {
-		 Car_cleardistance(car);
-		 return 1;
-	 }
-	 else return 0;
+    Car_setbasespeed(car, basespeed);
+    K230_getnstatus(&(car->k230));
+    if(car->k230.status.nstatus == 1) {
+        //到达N路口，执行相应操作
+        return 1; //到达N路口
+    }
+    else {
+        //未到达N路口，继续前进
+        return 0; //保持当前状态
+    }
 }
 
+//get_mode
+int Car_getmodefuc(CAR *car)
+{
+    Raspberry_getmodedata_update(&(car->raspberry));
+    if(car->raspberry.status.modedata_update == 1) {
+         //模式数据已更新
+         Raspberry_getmodedata(&(car->raspberry)); //获取模式数据
+         //发送{"cmd":"mode","result":"ok"}
+         Raspberry_printf("{\"cmd\":\"mode\",\"result\":\"ok\"}\n");
+         return 1; //获取完成
+    }
+    else {
+         return 0; //保持当前状态
+    }
+}
+
+//wait_run
+int Car_waitrunfuc(CAR *car)
+{
+    Raspberry_getrun(&(car->raspberry));
+    if(car->raspberry.status.run == 1) {
+         return 1; //获取完成
+    }
+    else {
+         return 0; //保持当前状态
+    }
+}
+
+//echo_park
+int Car_echoparkfuc(CAR *car)
+{
+//回复{"cmd":"run","parked":1} //到位
+    Raspberry_printf("{\"cmd\":\"run\",\"parked\":1}\n");
+    return 1; //回复完成
+}
+
+//wait_start
 int Car_waitstartfuc(CAR *car)
 {
-		Car_getkeyvalue(car);
-	 if(car->key.pin_value == 0)
-	 {
-		 car->key.pin_value = 1;
-	   return 1;
-	 }
-	 else return 0;
+    Raspberry_getstart(&(car->raspberry));
+    if(car->raspberry.status.start == 1) {
+        //开始状态为1，开始执行任务
+        return 1; //开始执行任务
+    }
+    else {
+        //开始状态为0，保持等待
+        return 0; //保持当前状态
+    }
 }
 
+//
+MASK mask_a = {
+    .mask_list = {    
+       stop,  
+       goto_T,
+       go_over,
+       goto_T,
+       go_over,
+       turnleft,
+       goto_N,
+       go_over,
+       stop,
+       echo_park,      
+       wait_start,
 
-const int delay_time = 600; //ms
-int Car_getnumberfuc(CAR *car)
+       turnback,
+       goto_N,
+       go_over,
+       stop
+    
+    },
+    .mask_num = 14
+};
+
+MASK mask_b = {
+    .mask_list = {    
+       stop,  
+       goto_T,
+       go_over,
+       goto_T,
+       go_over,
+       turnright,
+       goto_N,
+       go_over,
+       stop,
+       echo_park,      
+       wait_start,
+
+       turnback,
+       goto_N,
+       go_over,
+       stop
+    },
+    .mask_num = 14
+};
+
+MASK mask_c = {
+    .mask_list = {    
+     stop,
+     goto_T,
+     go_over,
+     goto_T,
+     go_over,
+     turnright,
+     goto_N,
+     go_over,
+     stop,
+     echo_park,
+     wait_start,
+
+     turnback,
+     goto_T,
+     go_over,
+     turnright,
+     goto_T,
+     get_num,
+     go_over,
+     mask_load
+    },
+    .mask_num = 20
+};
+
+MASK mask_c1 = {
+    .mask_list = {    
+    turnright,
+    goto_T,
+    get_num,
+    go_over,
+    mask_load
+    },
+    .mask_num = 5
+};
+
+MASK mask_c2 = {
+    .mask_list = {    
+    turnleft,
+    goto_T,
+    get_num,
+    go_over,
+    mask_load
+    },
+    .mask_num = 5
+};
+
+MASK mask_c3 = {
+    .mask_list = {
+        turnright,
+        goto_N,
+        go_over,
+        stop
+    },
+    .mask_num = 4
+};
+
+MASK mask_c4 = {
+    .mask_list = {
+        turnleft,
+        goto_N,
+        go_over,
+        stop
+    },
+    .mask_num = 4
+};
+
+//mask_load
+int Car_maskloadfuc(CAR *car)
 {
-   static int i = 0;
-	 static int j = 0;
-	 if(i == 0)
-	 {
-	   Car_resberrysendgetnumercmd(car);
-		 i++;
-		 return 0;
-	 }
-	 else
-	 {
-			Car_resberrygetstate(car);
-			
-		  if(car->resberry.state == resberry_complite_echo)
-			{
-			 Car_resberrygetnumber(car);
-			 if(car->resberry.num[0] != 0&& car->resberry.num[1] != 0)
-				 {
-					  i = 0;
-					  j = 0;
-					 	Car_setservotargetangle(&(car->servo),90.0);
-						Car_servogotoangle(&(car->servo));
-					 	printf("%d,%d\n",car->resberry.num[0],car->resberry.num[1]);
-						return 1;
-				 }
-			 else if(car->resberry.num[0] == 0||car->resberry.num[1] == 0)
-				 {
-						 i = 0;
-					 if(j == 0)
-					 {
-					 	Car_setservotargetangle(&(car->servo),70.0);
-						Car_servogotoangle(&(car->servo));
-						 delay_ms(1000);
-						 j++;
-						 return 0;
-					 }
-					 else if(j == 1)
-					 {
-					 	Car_setservotargetangle(&(car->servo),50.0);
-						Car_servogotoangle(&(car->servo));
-						 	delay_ms(1000);
-						 j++;
-						 return 0;
-					 }
-					 else if(j == 2)
-					 {
-					 Car_setservotargetangle(&(car->servo),110.0);
-					 Car_servogotoangle(&(car->servo));
-						 	delay_ms(1000);
-						 j++;
-						 return 0;
-					 }
-					 	else if(j == 3)
-					 {
-					 Car_setservotargetangle(&(car->servo),130.0);
-					 Car_servogotoangle(&(car->servo));
-						 	delay_ms(1000);
-						 j++;
-						 return 0;
-					 }
-					 else
-					 {
-						 printf("%d,%d\n",car->resberry.num[0],car->resberry.num[1]);
-						Car_setservotargetangle(&(car->servo),90.0);
-						Car_servogotoangle(&(car->servo));
-					   j = 0;
-						 i = 0;
-						 return 1;
-					 }
-
-			 }
-				 
-			}
-			else return 0;		
-	 }
+  if(car->raspberry.mode.target == 0)
+  {
+    if(car->raspberry.mode.park == 'A')
+    {
+        Car_setmask(car, mask_a);
+    }
+    else if(car->raspberry.mode.park == 'B')
+    {
+        Car_setmask(car, mask_b);
+    }
+  }
+  else if(car->raspberry.mode.target == 1)
+  {
+    static int pc = 0;
+    if(pc == 0)
+    {
+        car->target_num = car->k210.num[0]; //设置目标数字
+        Car_setmask(car, mask_c);
+        pc++;
+    }
+    else if(pc == 1)
+    {
+      if(car->k210.num[0] == car->target_num || car->k210.num[1] == car->target_num)
+      {
+        Car_setmask(car, mask_c1);
+      }
+      else{
+        Car_setmask(car, mask_c2);
+      }
+        pc++;
+    }
+    else if(pc == 2)
+    {
+      if(car->k210.num[0] == car->target_num || car->k210.num[1] == car->target_num)
+      {
+        Car_setmask(car, mask_c3);
+      }
+      else{
+        Car_setmask(car, mask_c4);
+      }
+   }
+ }
+  
+   return 1; //加载完成
 }
-
-const float the_last_angle = -65.5;
-int Car_turnlefttolinefuc(CAR *car)
-{
-	if(car->imu.turn_state == not_started)
-	{
-		Car_settargetyaw(car, the_last_angle);
-		car->imu.turn_state = turning;
-		return 0;
-	}
-  else if(car->imu.turn_state == turning)
-	{
-			Car_cal_and_setturnspeed(car);
-		  if(fabs(car->imu.angle.fAngle[yaw_id] - car->imu.targetyaw) < yaw_threshold)
-			{
-		Driver_setmotor_targetspeed(&(car->motor1),0);
-	  Driver_setmotor_targetspeed(&(car->motor2),0);
-			  car->imu.turn_state = complite_turn;
-			}
-			return 0;
-	}
-	else if(car->imu.turn_state == complite_turn)
-	{
-		Car_clearturnstate(car);
-		Car_clearhuidustate(car);
-	   return 1;
-	}
-	else return 0;
-}
-
-const float withoutline_speed = 25.0;
-int Car_gountilend(CAR *car)
-{
-   Car_cal_and_settracelinespeed_withoutHuidusensor(car,withoutline_speed); 
-	
-	 Huidu_getstate(&(car->huidu),1,8);
-	
-		if(car->huidu.state == in_the_end)
-	 {
-		 Car_cleardistance(car);
-		 Car_clearhuidustate(car);
-		 
-		 return 1;
-	 }
-	 else return 0;
-}
-
-int Car_turntoend(CAR *car)
-{
-	if(car->imu.turn_state == not_started)
-	{
-		Car_settargetyaw(car, 0.0);
-		car->imu.turn_state = turning;
-		return 0;
-	}
-  else if(car->imu.turn_state == turning)
-	{
-			Car_cal_and_setturnspeed(car);
-		  if(fabs(car->imu.angle.fAngle[yaw_id] - car->imu.targetyaw) < yaw_threshold)
-			{
-		Driver_setmotor_targetspeed(&(car->motor1),0);
-	  Driver_setmotor_targetspeed(&(car->motor2),0);
-			  car->imu.turn_state = complite_turn;
-			}
-			return 0;
-	}
-	else if(car->imu.turn_state == complite_turn)
-	{
-		Car_clearturnstate(car);
-		Car_clearhuidustate(car);
-		
-	   return 1;
-	}
-	else return 0;
-}
-
-int Car_resethwt101fuc(CAR *car)
-{
-   WitWriteReg(0x76, 0x00);
-	 return 1;
-}
-
-int Car_voicetrance(CAR *car)
-{  
- 
-	Car_getkeyvalue(car);
-	if(car->key.pin_value == 0)
-	{
-		 Car_laseroff(&(car->laser));
-		 car->key.pin_value = 1;
-	   return 1;
-	}
-	else
-	{
-	   Car_laseron(&(car->laser));
-		 return 0;
-	}
-	
-}
-
-
-
-
