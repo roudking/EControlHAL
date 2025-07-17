@@ -247,7 +247,8 @@ int Car_getnumfuc(CAR *car)
     static int pc = 0;
     if(pc == 0)
     {
-        K210_setnumstatus(1); //启动K210获取数字 标志位置位
+        K210_numstatusIN(1); //启动K210获取数字 标志位置位
+        K210_printf("{\"cmd\":\"num\"}\n");
         pc++;
         return 0; //开始获取
     }
@@ -440,7 +441,7 @@ MASK mask_c = {
      go_over,
      mask_load
     },
-    .mask_num = 20
+    .mask_num = 18
 };
 
 MASK mask_c1 = {
