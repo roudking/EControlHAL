@@ -5,5 +5,7 @@
 
 void encoder_init(TIM_HandleTypeDef* tim);
 int16_t encoder_getcounter(TIM_HandleTypeDef* tim);
+int16_t encoder_justgetcounter(TIM_HandleTypeDef* tim);
+void encoder_clear(TIM_HandleTypeDef* tim);
 
 #endif 
