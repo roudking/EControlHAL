@@ -7,19 +7,26 @@
 
 typedef struct
 {
+   int speed;
+   int last_speed;
+   int speed_flag;
+}SHOW_MESSAGE;
+
+typedef struct
+{
 	 int key;
 	 int last_key;
-     int menu_num;
+
 	 int cursor;
-	 int speed;
-	 int last_speed;
+     int menu_num;
+
+	 SHOW_MESSAGE message;
 }OLED_SHOW;
 
 
 void Menu_init(void);
-int Menu_getnum(void);
-int Menu_getdeltanum(void);
-void Menu_encoderclear(void);
 void Menu_show(volatile OLED_SHOW *oled_show);
+void Menu_showfuc(volatile OLED_SHOW *oled_show);
+void Menu_keyfuc(volatile OLED_SHOW *oled_show);
 
 #endif

@@ -4,14 +4,15 @@
 #include "font.h"
 #include "stdlib.h"
 #include "string.h"
-#include "OLED_iic.h"
-#include "my_delay.h"
+#include "i2c.h"
 #include "math.h"
 
 
+#define OLED_IIC_PORT hi2c1
+
 typedef enum {
-  OLED_COLOR_NORMAL = 0, // 姝ｅ父妯″紡 鐧藉簳榛戝瓧
-  OLED_COLOR_REVERSED    // 鍙嶈壊妯″紡 榛戝簳鐧藉瓧
+  OLED_COLOR_NORMAL = 0, // 正常模式 黑底白字
+  OLED_COLOR_REVERSED    // 反色模式 白底黑字
 } OLED_ColorMode;
 
 void OLED_Init();

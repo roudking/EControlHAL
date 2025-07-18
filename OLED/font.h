@@ -28,6 +28,7 @@ typedef struct Font {
 } Font;
 
 extern const Font font16x16;
+extern const Font myfont;
 
 /**
  * @brief 图片结构体
