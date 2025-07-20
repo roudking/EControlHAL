@@ -12,17 +12,7 @@ void K210_uartinit(void)
 {
   // Set up UART callbacks
    usart_callbackregister(&K210_UART, K210_uartcallback);
-//   usart_rx_it_start(&K210_UART,&k210_uctemp);
-}
-
-void K210_startit(void)
-{
    usart_rx_it_start(&K210_UART,&k210_uctemp);
-}
-
-void K210_stopit(void)
-{
-	 usart_rx_it_stop(&K210_UART);
 }
 
 void K210_uartsend(unsigned char *p_data,unsigned int uiSize)
@@ -46,34 +36,45 @@ static void K210_uartcallback(void)
 		   cJSON *json = cJSON_Parse((char *)k210_cmd_buffer);
 		
 		  if (json) {
-						cJSON *json_command = cJSON_GetObjectItem(json, "cmd");
+				 cJSON *json_command = cJSON_GetObjectItem(json, "cmd");
 		
 			   if (json_command && json_command->type == cJSON_String) 
+	  			{
+             strcpy(k210_cmd, json_command->valuestring); // 更新全局变量cmd
+  				if(strcmp(k210_cmd,"num") == 0)
 				 {
-            strcpy(k210_cmd, json_command->valuestring); // 更新全局变量cmd
-				   
-							
-							 if(strcmp(k210_cmd,"send_angle") == 0)
-						  {
-								  cJSON *voice_angle = cJSON_GetObjectItem(json, "voice_angle");
-							
-								 		// 从 result 中提取数字字符串
-										
-								 int result_num = voice_angle->valueint;
-								if(result_num < 0) result_num += 360;
-						
-								result_num = 360 - result_num;
-				   
-								 K210_angledataIN(result_num);
-								 K210_stateIN(k210_complite_echo);
-								
-						  }
-							
-					} 
+                    cJSON *num_json = cJSON_GetObjectItem(json, "result");
+					char num_str[6];
+					strcpy(num_str, num_json->valuestring);
+					//将拿到的数字 一位一位存进num[6]
+					int num[6] = {0, 0, 0, 0, 0, 0};
+					int len = strlen(num_str);
+					for (int i = 0; i < 6; i++) {
+                        if (i < len)
+                            num[i] = num_str[i] - '0'; // 字符转数字
+                        else
+							num[i] = 0; // 超出部分清0
+					}
+
+                 //对数组num[6]进行排序从大到小
+                    for (int j = 0; j < 6 - 1; j++) {
+                        for (int k = 0; k < 6 - j - 1; k++) {
+                            if (num[k] < num[k + 1]) {
+                                int temp = num[k];
+                                num[k] = num[k + 1];
+                                num[k + 1] = temp;
+                            }
+                        }
+                    }
+
+                    K210_numdataIN(num);
+				}
+
+
 				memset(k210_cmd_buffer,'\0',sizeof(k210_cmd_buffer));
 				memset(k210_cmd,'\0',sizeof(k210_cmd));
-  		
-		   }
+		     }
+        }
 	
 	     cJSON_Delete(json);	
   }

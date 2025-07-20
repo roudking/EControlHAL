@@ -1,25 +1,34 @@
 #include "K210.h"
 
-static K210_TEMP k210_temp;
+//树莓派缓存区
+static K210 k210_temp;
 
-void K210_init(void)
+void K210_numstatusIN(int status)
 {
-    K210_uartinit();
+    k210_temp.status.numstatus = status;
 }
 
-void K210_angledataIN(int indata)
+void K210_getnumstatus(K210 *k210)
 {
-   k210_temp.angle = indata;
+    k210->status.numstatus = k210_temp.status.numstatus;
 }
 
-void K210_stateIN(K210_STATE state)
+void K210_numdataIN(int *num)
 {
-   k210_temp.state = state;
-}   
+    k210_temp.num[0] = num[0];
+    k210_temp.num[1] = num[1];
+    k210_temp.num[2] = num[2];
+    k210_temp.num[3] = num[3];
+    k210_temp.num[4] = num[4];
+    k210_temp.num[5] = num[5];
+}
 
-void K210_getangle(K210 *k210)
+void K210_getnumdata(K210 *k210)
 {
-	while(k210_temp.state == k210_wait_echo){};
-  k210->angle = k210_temp.angle;
-	k210_temp.state = k210_wait_echo;
+    k210->num[0] = k210_temp.num[0];
+    k210->num[1] = k210_temp.num[1];
+    k210->num[2] = k210_temp.num[2];
+    k210->num[3] = k210_temp.num[3];
+    k210->num[4] = k210_temp.num[4];
+    k210->num[5] = k210_temp.num[5];
 }
