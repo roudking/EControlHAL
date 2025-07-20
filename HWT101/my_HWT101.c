@@ -25,12 +25,7 @@ extern uint8_t ucRegIndex;
 extern uint16_t usRegDataBuff[4];
 extern uint32_t uiRegDataLen;
 
-  //101z轴置零
-void Myhwt101_resetz(void)                  
-{
-	WitWriteReg(0x76, 0x00);
-	HAL_Delay(2000);
-}
+  
 
 void Myhwt101_init(void)
 {
@@ -39,10 +34,12 @@ void Myhwt101_init(void)
 	WitRegisterCallBack(SensorDataUpdata);
 	WitDelayMsRegister(Delayms);
 	HWT101_UARTStart();
-	Myhwt101_resetz();
+
+    delay_ms(2500);
 }
 
-void Myhwt101_getdata(HWT101_DATA *hwt_data)
+
+void Myhwt101_getdata(IMU *hwt_data)
 {
 		CopeWitData(ucRegIndex,usRegDataBuff,uiRegDataLen);
 		if(s_cDataUpdate1 || s_cDataUpdate2 ||s_cDataUpdate3 ||s_cDataUpdate4)
@@ -52,6 +49,24 @@ void Myhwt101_getdata(HWT101_DATA *hwt_data)
 				hwt_data->fAcc[i] = sReg[AX+i] / 32768.0f * 16.0f;
 				hwt_data->fGyro[i] = sReg[GX+i] / 32768.0f * 2000.0f;
 				hwt_data->fAngle[i] = sReg[Roll+i] / 32768.0f * 180.0f;
+				
+             if(i == yaw_id) 
+             {
+                hwt_data->last_yaw = hwt_data->current_yaw;
+                hwt_data->current_yaw = hwt_data->fAngle[yaw_id];
+
+                  static int cnt = 0;
+             if(hwt_data->last_yaw < 180 && hwt_data->last_yaw > 160 && hwt_data->current_yaw > -180 && hwt_data->current_yaw < -160){
+                cnt ++;
+                } 
+            else if (hwt_data->current_yaw < 180 && hwt_data->current_yaw > 160 && hwt_data->last_yaw > -180 && hwt_data->last_yaw < -160) {
+                 cnt --;
+                }
+            hwt_data->real_yaw = hwt_data->current_yaw + cnt * 360.0;
+
+} 
+
+
 			}
 			if(s_cDataUpdate1 | ACC_UPDATE)
 			{
@@ -73,6 +88,15 @@ void Myhwt101_getdata(HWT101_DATA *hwt_data)
 }
 
 
+//101z轴置零
+void Myhwt101_resetz(IMU *imu)                  
+{
+   while(imu->zero_yaw == 0.0)
+   {
+    Myhwt101_getdata(imu);
+   imu-> zero_yaw = imu->current_yaw;
+   }
+}
 
 
 
