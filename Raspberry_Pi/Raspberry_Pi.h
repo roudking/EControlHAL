@@ -1,37 +1,37 @@
-#ifndef _RESBERRY_PI_H
-#define _RESBERRY_PI_H
+#ifndef _RASPBERRY_PI_H
+#define _RASPBERRY_PI_H
 
-#include "Resberry_uart.h"
+#include "string.h"
 
-typedef enum
-{
-     resberry_wait_echo,
-	 resberry_complite_echo
-}Resberry_STATE;
+typedef struct{
+     int modedata_update;
+     int run;   //运行指令
+     int start; //开始指令
+}RASPBERRY_STATUS;
 
-typedef struct
-{
-    volatile int speed;
-	volatile double angle;
-	volatile Resberry_STATE state;
-}RESBERRY_TEMP;
+typedef struct{
+     char park;
+     int target;
+}MODE;
 
 typedef struct
 {
-    volatile int speed;
-	volatile double angle;
-	volatile Resberry_STATE state;
-}RESBERRY;
+    MODE mode; // 模式
+	volatile RASPBERRY_STATUS status;
+}RASPBERRY;
 
-void Resberry_init(void);
+//获得模式数据
+void Raspberry_modedataIN(MODE mode);
+void Raspberry_getmodedata(RASPBERRY *raspberry);
+void Raspberry_modedata_updateIN(int status);
+void Raspberry_getmodedata_update(RASPBERRY *raspberry);
 
-void Resberry_speeddataIN(int indata);
-void Resberry_getspeed(RESBERRY *resberry);
-void Resberry_angledataIN(double angle);
-void Resberry_getangle(RESBERRY *resberry);
-void Resberry_stateIN(Resberry_STATE state);
-void Resberry_getstate(RESBERRY *resberry);
+//获取运行指令
+void Raspberry_runIN(int run);
+void Raspberry_getrun(RASPBERRY *raspberry);
 
-
+//获取开始指令
+void Raspberry_startIN(int start);
+void Raspberry_getstart(RASPBERRY *raspberry);
 
 #endif

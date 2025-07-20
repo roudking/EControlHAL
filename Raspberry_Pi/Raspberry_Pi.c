@@ -1,39 +1,60 @@
 #include "Raspberry_Pi.h"
 
-static RASPBERRY_TEMP raspberry_temp;
+//树莓派缓存区
+static RASPBERRY raspberry_temp;
 
-void Raspberry_init(void)
+void Raspberry_modedataIN(MODE mode)
 {
-   Raspberry_uartinit();
+    raspberry_temp.mode = mode; //设置模式
 }
 
-void Raspberry_speeddataIN(int indata)
+void Raspberry_getmodedata(RASPBERRY *raspberry)
 {
-   raspberry_temp.speed = indata;
+    raspberry->mode = raspberry_temp.mode; //获取模式
 }
 
-void Raspberry_getspeed(RASPBERRY *raspberry)
+void Raspberry_modedata_updateIN(int status)
 {
-	raspberry->speed = raspberry_temp.speed;
+    raspberry_temp.status.modedata_update = status; //更新模式数据状态
 }
 
-void Raspberry_angledataIN(double angle)
+void Raspberry_getmodedata_update(RASPBERRY *raspberry)
 {
-   raspberry_temp.angle = angle;
+    raspberry->status.modedata_update = raspberry_temp.status.modedata_update; //获取模式数据更新状态)
+    //置位才清零标志位
+    if(raspberry_temp.status.modedata_update == 1)
+    {
+        raspberry_temp.status.modedata_update = 0; //清零标志位
+    }
 }
 
-void Raspberry_getangle(RASPBERRY *raspberry)
+void Raspberry_runIN(int run)
 {
-	raspberry->angle = raspberry_temp.angle;
+    raspberry_temp.status.run = run; //更新运行状态
 }
 
-void Raspberry_stateIN(Raspberry_STATE state)
+void Raspberry_getrun(RASPBERRY *raspberry)
 {
-   raspberry_temp.state = state;
-}   
-
-void Raspberry_getstate(RASPBERRY *raspberry)
-{
-	raspberry->state = raspberry_temp.state;
+    raspberry->status.run = raspberry_temp.status.run; //获取运行状态
+    //置位才清零标志位
+    if(raspberry_temp.status.run == 1)
+    {
+        raspberry_temp.status.run = 0; //清零标志位
+    }
 }
 
+
+void Raspberry_startIN(int start)
+{
+    raspberry_temp.status.start = start; //更新开始状态
+}
+
+void Raspberry_getstart(RASPBERRY *raspberry)
+{
+    raspberry->status.start = raspberry_temp.status.start; //获取开始状态
+    //置位才清零标志位
+    if(raspberry_temp.status.start == 1)
+    {
+        raspberry_temp.status.start = 0; //清零标志位
+    }
+}
