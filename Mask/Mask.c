@@ -95,7 +95,6 @@ static void Mask_timcallback(void)
      Driver_setmotor_targetspeed(&(car.motor1), car.basespeed - delta);
      Driver_setmotor_targetspeed(&(car.motor2), car.basespeed + delta);
 
-
     Driver_setspeed(&(car.motor1),&(car.motor2));
 
 }
