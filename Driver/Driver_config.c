@@ -26,29 +26,28 @@
 
 DRIVER_CONFIG leftdriver = {
 
-	
-	.Encoder_PORT = &LeftDriver_Encoder_Timer,
+	.encoder_port = &LeftDriver_Encoder_Timer,
 
-	.DriverPWM_PORT = &LeftDriver_Timer,
-	.DriverPWMTimer_autoreload = LeftDriver_Timer_autoreload,
-	.Channel[0] = LeftDriver_TIM_channel_1,
-	.Channel[1] = LeftDriver_TIM_channel_2,
-	
-	.Encoder_polarity = leftdriver_encoder_polarity,
+	.pwm_port = &LeftDriver_Timer,
+	.pwm_timer_autoreload = LeftDriver_Timer_autoreload,
+	.channel[0] = LeftDriver_TIM_channel_1,
+	.channel[1] = LeftDriver_TIM_channel_2,
 
-	.Pwm_polarity = leftdriver_pwm_polarity
+	.encoder_polarity = leftdriver_encoder_polarity,
+
+	.pwm_polarity = leftdriver_pwm_polarity
 
 };
 
 DRIVER_CONFIG rightdriver = {
-	.Encoder_PORT = &RightDriver_Encoder_Timer,
+	.encoder_port = &RightDriver_Encoder_Timer,
 
-	.DriverPWM_PORT = &RightDriver_Timer,
-	.DriverPWMTimer_autoreload = RightDriver_Timer_autoreload,
-	.Channel[0] = RightDriver_TIM_channel_1,
-	.Channel[1] = RightDriver_TIM_channel_2,
+	.pwm_port = &RightDriver_Timer,
+	.pwm_timer_autoreload = RightDriver_Timer_autoreload,
+	.channel[0] = RightDriver_TIM_channel_1,
+	.channel[1] = RightDriver_TIM_channel_2,
 
-	.Encoder_polarity = rightdriver_encoder_polarity,
+	.encoder_polarity = rightdriver_encoder_polarity,
 
-	.Pwm_polarity = rightdriver_pwm_polarity
+	.pwm_polarity = rightdriver_pwm_polarity
 };

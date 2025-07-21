@@ -11,14 +11,13 @@ typedef enum
 
 typedef struct
 {
-  TIM_HandleTypeDef *Pwm_TIMERPORT;
-  uint16_t  CHANNEL;
+  TIM_HandleTypeDef *pwm_port; // PWM port for the servo
+  uint16_t  channel; // PWM channel for the servo
   float CounterCycleTime; //us
 
   Servo_Category kind;
-  
-  float delta_bias; //us, the bias of the servo angle
-}SERVO_CONFIG;
+  float delta_bias; 
+} SERVO_CONFIG;
 
 extern SERVO_CONFIG servo_config;
 

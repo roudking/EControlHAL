@@ -4,9 +4,9 @@
 #include "my_gpio.h"
 
 typedef struct {
-    GPIO_TypeDef *BeepGPIO_PORT;
-    uint16_t BeepGPIO_Pin;
-}BEEP_CONFIG;
+    GPIO_TypeDef *gpio_port;  // GPIO port for the beep
+    uint16_t gpio_pin;        // GPIO pin for the beep
+} BEEP_CONFIG;
 
 extern BEEP_CONFIG beep_config;
 

@@ -5,8 +5,8 @@
 
 typedef struct
 {
-    GPIO_TypeDef *KEYGPIO_PORT;  // GPIO port for the key
-    uint16_t KEYGPIO_PIN;        // GPIO pin number for the key
+    GPIO_TypeDef *gpio_port;  // GPIO port for the key
+    uint16_t gpio_pin;        // GPIO pin number for the key
 } KEY_CONFIG;
 
 extern KEY_CONFIG key1_config;

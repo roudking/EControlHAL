@@ -7,11 +7,11 @@
 // #define KEY2_PIN GPIO_PIN_1
 
 KEY_CONFIG key1_config = {
-    .KEYGPIO_PORT = KEY1_GPIO_PORT,
-    .KEYGPIO_PIN = KEY1_PIN
+    .gpio_port = KEY1_GPIO_PORT,
+    .gpio_pin = KEY1_PIN
 };
 
 // KEY_CONFIG key2_config = {
-//     .KEYGPIO_PORT = KEY2_GPIO_PORT,
-//     .KEYGPIO_PIN = KEY2_PIN
+//     .gpio_port = KEY2_GPIO_PORT,
+//     .gpio_pin = KEY2_PIN
 // };

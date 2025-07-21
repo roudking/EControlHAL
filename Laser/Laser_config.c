@@ -4,6 +4,6 @@
 #define LASER_GPIO_Pin GPIO_PIN_
 
 LASER_CONFIG laser_config = {
-    .LaserGPIO_PORT = LASER_GPIO_Port,
-    .LaserGPIO_PIN = LASER_GPIO_Pin
+    .gpio_port = LASER_GPIO_Port,
+    .gpio_pin = LASER_GPIO_Pin
 };

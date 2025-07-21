@@ -2,5 +2,5 @@
 
 int Key_getvalue(KEY_CONFIG config)
 {
-  return gpio_readpin(config.KEYGPIO_PORT, config.KEYGPIO_PIN);
+  return gpio_readpin(config.gpio_port, config.gpio_pin);
 }

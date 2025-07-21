@@ -5,8 +5,8 @@
 
 typedef struct
 {
-    GPIO_TypeDef *LaserGPIO_PORT;  // GPIO port for the laser
-    uint16_t LaserGPIO_PIN;       // GPIO pin for the laser
+    GPIO_TypeDef *gpio_port;  // GPIO port for the laser
+    uint16_t gpio_pin;       // GPIO pin for the laser
 } LASER_CONFIG;
 
 extern LASER_CONFIG laser_config;

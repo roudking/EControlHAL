@@ -7,8 +7,8 @@
 #define bias 0.0f
 
 SERVO_CONFIG servo_config = {
-    .Pwm_TIMERPORT = &Servo_Timer_Port,
-    .CHANNEL = Servo_TIM_channel,
+    .pwm_port = &Servo_Timer_Port,
+    .channel = Servo_TIM_channel,
     .CounterCycleTime = Servo_TIM_CounterCycleTime,
     .kind = Servo_kind,
     .delta_bias = bias

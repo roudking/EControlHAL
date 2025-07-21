@@ -7,18 +7,18 @@
 typedef struct {
 
 	//电机编码器端口设置
-	TIM_HandleTypeDef *Encoder_PORT;
+	TIM_HandleTypeDef *encoder_port;
 
 	//电机PWM端口设置
-	TIM_HandleTypeDef *DriverPWM_PORT;
-	int DriverPWMTimer_autoreload;
-	int Channel[2];
+	TIM_HandleTypeDef *pwm_port;
+	int pwm_timer_autoreload;
+	int channel[2];
   
 	//电机编码器极性设置  （软件）
-	int Encoder_polarity;
+	int encoder_polarity;
 
 	//电机PWM极性设置（软件）
-	int Pwm_polarity;
+	int pwm_polarity;
 
 } DRIVER_CONFIG;
 
