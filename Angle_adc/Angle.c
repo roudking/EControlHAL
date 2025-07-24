@@ -28,7 +28,7 @@ void Angle_read(ANGLE *angle) {
     angle->angle = angle_Cal(angle->config.origin_data[0]);
 
      // Apply a simple low-pass filter to the angle
-     double filter = 0.3; // Filter coefficient, adjust as needed
-    angle->filter_angle = filter * angle->filter_angle + (1 - filter) * angle->angle;
+     double filter = 0.95; // Filter coefficient, adjust as needed
+    angle->filter_angle = (1 - filter) * angle->filter_angle + filter * angle->angle;
 
 }
