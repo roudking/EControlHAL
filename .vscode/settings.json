@@ -4,6 +4,7 @@
         "beep_config.h": "c",
         "laser_config.h": "c",
         "iic.h": "c",
-        "mask_perform.h": "c"
+        "mask_perform.h": "c",
+        "angle_config.h": "c"
     }
 }

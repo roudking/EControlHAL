@@ -25,13 +25,12 @@ void Angle_Create_and_Initbuffer(ANGLE_CONFIG config) {
  * This function is called when an input capture event occurs.
  * It retrieves the captured values and calculates the frequency and duty cycle.
  */
- #define cnt_clk 72000000/(8+1)//计数器频率
 static void Angle_ICCallbackfunc(void) { 
 			angle_buffer.config.CCR1 = Angle_ic_getvalue(angle_buffer.config, TIM_CHANNEL_1);
 			if(angle_buffer.config.CCR1 != 0)
 				{
 					angle_buffer.config.CCR2 = Angle_ic_getvalue(angle_buffer.config, TIM_CHANNEL_2);
-					angle_buffer.frequency = (double)cnt_clk/(angle_buffer.config.CCR1+1);
+					angle_buffer.frequency = (double)angle_buffer.config.cnt_clk/(angle_buffer.config.CCR1+1);
 					angle_buffer.duty = (double)(angle_buffer.config.CCR2+1)*100/(angle_buffer.config.CCR1+1);
 				}
 			else
