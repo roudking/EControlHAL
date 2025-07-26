@@ -2,7 +2,7 @@
 
 void Servo_pwminit(SERVO_CONFIG servo_config)
 {
-  pwm_init(servo_config.Pwm_TIMERPORT, servo_config.CHANNEL);
+  pwm_init(servo_config.pwm_port, servo_config.channel);
 }
 
 float  Servo_Comparevaluecal(SERVO_CONFIG servo_config, float angle)
@@ -26,7 +26,7 @@ float  Servo_Comparevaluecal(SERVO_CONFIG servo_config, float angle)
 
 void Servo_setcompare(SERVO_CONFIG servo_config, uint16_t pwm)
 {
-  pwm_set(servo_config.Pwm_TIMERPORT, servo_config.CHANNEL, pwm);
+  pwm_set(servo_config.pwm_port, servo_config.channel, pwm);
 }
 
 
