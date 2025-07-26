@@ -6,5 +6,6 @@
 int gpio_readpin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
 void gpio_resetpin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
 void gpio_setpin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+void gpio_togglepin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
 
 #endif
