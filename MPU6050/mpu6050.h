@@ -4,7 +4,7 @@
 #include "mpu6050_iic.h"
 #include "serial.h"
 #include "my_delay.h"
-#include "arm_math.h"
+#include "math.h"
 
 typedef struct
 {
