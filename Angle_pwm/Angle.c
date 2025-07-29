@@ -1,55 +1,39 @@
 #include "Angle.h"
 
-static void Angle_ICCallbackfunc(void);
-static ANGLE angle_buffer;
-
 /**
  * @brief Create and initialize the angle buffer with the given configuration.
  * This function initializes the input capture for angle measurement and registers the callback function.
  * 
  * @param config Configuration for angle measurement, including timer handle and capture channels.
  */
-void Angle_Create_and_Initbuffer(ANGLE_CONFIG config) {
-    angle_buffer.config = config;
-
-    // Initialize the input capture for angle measurement
-    Angle_ic_init(angle_buffer.config);
-
-    // Register the callback function for input capture events
-    tim_ic_callbackregister(angle_buffer.config.htim, Angle_ICCallbackfunc);
+void Angle_Create(ANGLE *angle, ANGLE_CONFIG *config) {
+	// Register the callback function for input capture events
+	Angle_config_set_anglecallback(config, Angle_ic_callbackfunc); 
+	angle->config = config;
 }
-
 
 /**
- * @brief Callback function for input capture events.
- * This function is called when an input capture event occurs.
- * It retrieves the captured values and calculates the frequency and duty cycle.
+ * @brief Initialize the angle structure.
+ * This function sets up the input capture for angle measurement and initializes the angle buffer.
+ * 
+ * @param angle Pointer to the ANGLE structure to initialize.
  */
-static void Angle_ICCallbackfunc(void) { 
-			angle_buffer.config.CCR1 = Angle_ic_getvalue(angle_buffer.config, TIM_CHANNEL_1);
-			if(angle_buffer.config.CCR1 != 0)
-				{
-					angle_buffer.config.CCR2 = Angle_ic_getvalue(angle_buffer.config, TIM_CHANNEL_2);
-					angle_buffer.frequency = (double)angle_buffer.config.cnt_clk/(angle_buffer.config.CCR1+1);
-					angle_buffer.duty = (double)(angle_buffer.config.CCR2+1)*100/(angle_buffer.config.CCR1+1);
-				}
-			else
-				{
-					angle_buffer.frequency = 0;
-					angle_buffer.duty = 0;
-				}
+void Angle_init(ANGLE *angle) {
+
+    tim_ic_callbackregister(angle->config->htim, angle->config->tim_ic_callback);
+	Angle_ic_init(*angle->config); // Initialize the input capture for angle measurement
+
 }
 
-
- /**
+/**
  * @brief Get the current duty cycle and frequency from the angle buffer.
  * This function updates the angle structure with the latest duty cycle and frequency.
  * 
  * @param angle Pointer to the ANGLE structure to update.
  */
 void Angle_getduty_and_frequency(ANGLE *angle) {
-	angle->duty = angle_buffer.duty; // Return the current duty cycle
-	angle->frequency = angle_buffer.frequency; // Return the current frequency
+	angle->duty = angle->config->data_buffer.duty; // Return the current duty cycle
+	angle->frequency = angle->config->data_buffer.frequency; // Return the current frequency
 }
 
 
@@ -65,7 +49,6 @@ static double Angle_CalculateAngle(double duty) {
 	return (duty / 100.0) * 360.0; // Return the angle in degrees
 }
 
-
  /**
  * @brief Get the current angle based on the duty cycle.
  * This function updates the angle field in the ANGLE structure.
@@ -78,9 +61,9 @@ void Angle_getangle(ANGLE *angle) {
 	angle->angle = Angle_CalculateAngle(angle->duty); // Calculate the angle based on the duty cycle
 
 	 static int cnt = 0;
-	if(angle->angle > 330 && angle->last_angle < 30) {
+	if(angle->angle >= 300 && angle->last_angle < 60) {
 		cnt--; // Increment the counter if crossing zero
-	} else if(angle->angle < 30 && angle->last_angle > 330) {
+	} else if(angle->angle < 60 && angle->last_angle > 300) {
 		cnt++; // Decrement the counter if crossing zero in the opposite direction
 	}
 

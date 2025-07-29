@@ -11,10 +11,11 @@ typedef struct {
   double frequency; // Frequency of the input signal
   double duty; // Duty cycle of the input signal
 
-  ANGLE_CONFIG config; // Configuration for angle measurement
+  ANGLE_CONFIG *config; // Configuration for angle measurement
 } ANGLE;
 
-void Angle_Create_and_Initbuffer(ANGLE_CONFIG config);
+void Angle_Create(ANGLE *angle, ANGLE_CONFIG *config); // Function to create and initialize the angle structure
+void Angle_init(ANGLE *angle); // Function to initialize the angle structure
 void Angle_getduty_and_frequency(ANGLE *angle); // Function to get the current duty cycle and frequency
 void Angle_getangle(ANGLE *angle); // Function to get the current angle based on duty cycle
 
