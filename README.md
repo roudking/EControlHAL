@@ -31,8 +31,10 @@
 
 <p align="center">
   <a href="#-项目简介">项目简介</a> ·
+  <a href="#-首页速览">首页速览</a> ·
   <a href="#-核心亮点">核心亮点</a> ·
   <a href="#-系统架构">系统架构</a> ·
+  <a href="#-运行时数据流">运行时数据流</a> ·
   <a href="#-快速开始">快速开始</a> ·
   <a href="#-典型用法">典型用法</a> ·
   <a href="#-模块矩阵">模块矩阵</a> ·
@@ -211,125 +213,21 @@ MASK mask_start = {
 
 ## 🧭 系统架构
 
-下面是 EControlHAL 的工程级架构图，展示了从任务层到 HAL 层的完整依赖关系。
+下面是 EControlHAL 的工程级架构图，展示了从任务层到 HAL 层的完整分层关系、核心模块与主要依赖路径。
 
-```mermaid
-flowchart TB
-
-    %% =========================
-    %% Top Layer
-    %% =========================
-    subgraph APP["Application / Mission Layer"]
-        Mask["Mask<br/>任务流程调度 / 比赛流程编排"]
-        Nav["Nvigation<br/>导航相关逻辑"]
-        OLEDMenu["OLED / Menu<br/>显示与菜单交互"]
-    end
-
-    %% =========================
-    %% Control Layer
-    %% =========================
-    subgraph CTRL["Control & Logic Layer"]
-        Car["Car<br/>整车状态组织"]
-        PIDCtrl["PID Controller<br/>位置式 / 增量式 / 前馈 / 限幅"]
-        Motion["Motion Logic<br/>速度环 / 转向环 / 位置环 / 差速控制"]
-    end
-
-    %% =========================
-    %% Device Driver Layer
-    %% =========================
-    subgraph DEV["Device Driver Layer"]
-        Driver["Driver<br/>直流电机 + 编码器 + PWM"]
-        Servo["Servo<br/>舵机角度控制"]
-        Stepper["Stepper<br/>串口步进电机控制"]
-        StepperGPIO["Stepper_withgpio_toggle<br/>GPIO 脉冲步进电机控制"]
-        Key["Key<br/>按键输入"]
-        Beep["Beep<br/>蜂鸣器"]
-        Laser["Laser<br/>激光 / LED 输出"]
-        Sensors["Sensors<br/>DHT11 / MPU6050 / HWT101 / Angle / HuiduSensor"]
-        Vision["Vision & Host<br/>K210 / K230 / Raspberry Pi"]
-    end
-
-    %% =========================
-    %% System Layer
-    %% =========================
-    subgraph SYS["System / BSP Wrapper Layer"]
-        GPIO["my_gpio<br/>GPIO 读写 / 翻转"]
-        PWM["pwm<br/>PWM 启动 / 占空比设置"]
-        Encoder["encoder<br/>编码器启动 / 计数读取"]
-        Serial["serial<br/>串口发送 / 接收 / 回调注册"]
-        TIMIT["tim_it<br/>定时器中断与回调分发"]
-        Delay["my_delay<br/>us / ms 延时"]
-    end
-
-    %% =========================
-    %% HAL Layer
-    %% =========================
-    subgraph HAL["HAL / Platform Layer"]
-        STM32["STM32 HAL / CubeMX Generated Drivers"]
-    end
-
-    APP --> CTRL
-    CTRL --> DEV
-    DEV --> SYS
-    SYS --> HAL
-
-    Mask --> Car
-    Nav --> Car
-    OLEDMenu --> Car
-
-    Car --> Motion
-    Motion --> PIDCtrl
-
-    Car --> Driver
-    Car --> Servo
-    Car --> Vision
-    Car --> Sensors
-    Car --> Key
-    Car --> Laser
-
-    Motion --> Driver
-    PIDCtrl --> Driver
-
-    Driver --> PWM
-    Driver --> Encoder
-    Servo --> PWM
-    Stepper --> Serial
-    StepperGPIO --> GPIO
-    StepperGPIO --> TIMIT
-
-    Key --> GPIO
-    Beep --> GPIO
-    Laser --> GPIO
-    Sensors --> GPIO
-    Sensors --> Serial
-    Sensors --> Delay
-    Vision --> Serial
-
-    GPIO --> STM32
-    PWM --> STM32
-    Encoder --> STM32
-    Serial --> STM32
-    TIMIT --> STM32
-    Delay --> STM32
-```
+<p align="center">
+  <img src="./docs/assets/econtrolhal-architecture.png" alt="EControlHAL Architecture" width="100%">
+</p>
 
 ---
 
 ## 🔁 运行时数据流
 
-静态架构体现模块依赖，运行时数据流体现控制闭环。EControlHAL 的典型控制过程如下：
+下面是 EControlHAL 的运行时闭环控制流程图，展示了从任务调度、输入采样、状态更新、决策判断、控制计算到执行器输出的完整反馈链路。
 
-```mermaid
-flowchart LR
-
-    Mission["Mission Scheduler<br/>Mask 任务调度"] --> Sense["Input Sampling<br/>编码器 / IMU / 视觉 / 按键"]
-    Sense --> State["State Update<br/>更新 CAR / 设备对象状态"]
-    State --> Decision["Decision<br/>任务判定 / 状态推进"]
-    Decision --> Control["Control Computation<br/>PID / 差速 / 转向 / 位置控制"]
-    Control --> Output["Actuator Output<br/>电机 / 舵机 / 步进 / 灯光 / 蜂鸣器"]
-    Output --> Physical["Physical System<br/>小车 / 机器人实际运动"]
-    Physical --> Sense
-```
+<p align="center">
+  <img src="./docs/assets/econtrolhal-runtime-architecture.png" alt="EControlHAL Runtime Architecture" width="100%">
+</p>
 
 典型闭环流程可以理解为：
 
@@ -363,6 +261,10 @@ EControlHAL
 ├── Stepper/                    # 串口步进电机
 ├── Stepper_withgpio_toggle/    # 基于 GPIO 脉冲的步进电机控制
 ├── System/                     # 底层 BSP / HAL 封装
+├── docs/
+│   └── assets/
+│       ├── econtrolhal-architecture.png
+│       └── econtrolhal-runtime-architecture.png
 └── README.md
 ```
 
@@ -790,5 +692,4 @@ EControlHAL 适合：
 EControlHAL 来源于嵌入式控制、电赛控制题、小车系统与多模块联调实践。它的目标不是成为一个“外设例程合集”，而是沉淀一套真正适合控制类工程快速开发、复用和维护的代码框架。
 
 <p align="center">
-  <strong>If this project helps you, please consider giving it a ⭐ Star.</strong>
-</p>
+  <strong>If this pr
