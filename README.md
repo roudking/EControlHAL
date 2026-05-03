@@ -312,39 +312,16 @@ EControlHAL 推荐作为模块库集成到已有 STM32 工程中。
 
 ### 3. 按需选择模块
 
-#### 仅使用底层封装
+根据项目需求选择对应模块即可，不必一次性引入整个仓库。推荐按下表裁剪：
 
-```text
-System/
-```
+| 使用场景       | 推荐引入目录                                                                                 | 说明                                            |
+| ---------- | -------------------------------------------------------------------------------------- | --------------------------------------------- |
+| 仅使用底层封装    | `System/`                                                                              | GPIO、PWM、Encoder、UART、Timer、Delay 等基础 BSP 封装。 |
+| 使用直流电机闭环   | `System/`、`Driver/`                                                                    | 适用于编码器测速、PWM 输出和 PID 速度闭环控制。                  |
+| 使用舵机控制     | `System/`、`Servo/`                                                                     | 适用于舵机 PWM 初始化与角度控制。                           |
+| 使用完整小车控制框架 | `System/`、`Driver/`、`Servo/`、`Key/`、`Laser/`、`HWT101/`、`K210/`、`Raspberry_Pi/`、`Mask/` | 适用于包含底盘控制、姿态反馈、视觉通信、按键输入、灯光输出和任务流程调度的完整控制类项目。 |
 
-#### 使用直流电机闭环
-
-```text
-System/
-Driver/
-```
-
-#### 使用舵机控制
-
-```text
-System/
-Servo/
-```
-
-#### 使用完整小车控制框架
-
-```text
-System/
-Driver/
-Servo/
-Key/
-Laser/
-HWT101/
-K210/
-Raspberry_Pi/
-Mask/
-```
+> 建议从最小模块组合开始接入，确认编译和外设初始化正常后，再逐步加入传感器、通信和任务调度模块。
 
 ---
 
@@ -678,12 +655,19 @@ EControlHAL 适合：
 
 ## 📄 License
 
-本项目基于 MIT License 开源，详情请参见 [LICENSE](./LICENSE) 文件。
+当前仓库尚未声明开源许可证。正式用于开源协作前，建议补充以下许可证之一：
+
+* MIT License
+* Apache License 2.0
+
+如果暂未确定开源策略，也建议显式声明当前仓库的使用规则。
 
 ---
+
 ## 🙌 Acknowledgements
 
 EControlHAL 来源于嵌入式控制、电赛控制题、小车系统与多模块联调实践。它的目标不是成为一个“外设例程合集”，而是沉淀一套真正适合控制类工程快速开发、复用和维护的代码框架。
 
 <p align="center">
-  <strong>If this pr
+  <strong>If this project helps you, please consider giving it a ⭐ Star.</strong>
+</p>
