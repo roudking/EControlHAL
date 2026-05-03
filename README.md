@@ -655,12 +655,7 @@ EControlHAL 适合：
 
 ## 📄 License
 
-当前仓库尚未声明开源许可证。正式用于开源协作前，建议补充以下许可证之一：
-
-* MIT License
-* Apache License 2.0
-
-如果暂未确定开源策略，也建议显式声明当前仓库的使用规则。
+本项目基于 MIT License 开源，详情请参见 [LICENSE](./LICENSE) 文件。
 
 ---
 
